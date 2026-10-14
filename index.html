@@ -1,0 +1,738 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Multi-Organ Ultrasound Enhancement</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout concept: a clinical console. Dark scan-frames for images, crimson accent from the university colours, one wide comparison slider as the hero. */
+:root{
+  --bg:#f6f3f4; --surface:#ffffff; --surface2:#efe9eb; --ink:#1b1417; --muted:#665a60; --line:#e1d7db;
+  --accent:#a3123f; --accent-ink:#ffffff; --accent-soft:#f6e3e9; --scan:#0b0d0f; --scan-ink:#e9eef0;
+  --good:#1f7a55; --warn:#a85f00; --bad:#b3261e;
+  --f-display:"Bricolage Grotesque","Segoe UI",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f0c0e; --surface:#181316; --surface2:#211a1e; --ink:#f2eaed; --muted:#aa9da3; --line:#30262b;
+  --accent:#ee5b85; --accent-ink:#1b0a11; --accent-soft:#33141f; --scan:#000; --scan-ink:#e9eef0;
+  --good:#4fc08d; --warn:#e0a040; --bad:#ff7b72; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f0c0e; --surface:#181316; --surface2:#211a1e; --ink:#f2eaed; --muted:#aa9da3; --line:#30262b;
+  --accent:#ee5b85; --accent-ink:#1b0a11; --accent-soft:#33141f; --scan:#000; --scan-ink:#e9eef0;
+  --good:#4fc08d; --warn:#e0a040; --bad:#ff7b72; color-scheme:dark}
+
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--ink);font:16px/1.6 var(--f-body);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0;margin:0}
+h1,h2,h3{font-family:var(--f-display);line-height:1.1;margin:0;text-wrap:balance;letter-spacing:-.01em}
+h2{font-size:clamp(1.9rem,4vw,2.8rem)}
+h3{font-size:1.25rem}
+p{margin:0}
+a{color:var(--accent)}
+.wrap{max-width:1160px;margin-inline:auto}
+section{padding-block:72px;scroll-margin-top:64px}
+.eyebrow{font:500 .75rem/1 var(--f-mono);text-transform:uppercase;letter-spacing:.14em;color:var(--accent);margin-bottom:14px;display:block}
+.lede{color:var(--muted);max-width:64ch;margin-top:14px;font-size:1.05rem}
+.sec-head{margin-bottom:36px}
+:focus-visible{outline:3px solid var(--accent);outline-offset:3px;border-radius:4px}
+
+/* header */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:30;margin-inline:calc(-1*max(16px,env(safe-area-inset-left,0px)));padding-inline:max(16px,env(safe-area-inset-left,0px));background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.top .wrap{display:flex;align-items:center;gap:20px;height:56px}
+.brand{font:700 1rem var(--f-display);text-decoration:none;color:var(--ink);white-space:nowrap}
+.brand span{color:var(--accent)}
+nav{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;flex:1;min-width:0}
+nav a{font-size:.85rem;color:var(--muted);text-decoration:none;padding:6px 10px;border-radius:6px;white-space:nowrap}
+nav a:hover{color:var(--ink);background:var(--surface2)}
+.theme{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:8px;width:36px;height:36px;cursor:pointer;font-size:1rem}
+
+/* hero */
+.hero{padding-block:48px 64px}
+.hero-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);gap:48px;align-items:center}
+.tag{display:inline-block;font:500 .75rem var(--f-mono);background:var(--accent-soft);color:var(--accent);padding:6px 10px;border-radius:6px;margin-bottom:20px}
+h1{font-size:clamp(2.2rem,5.2vw,3.9rem);font-weight:700}
+h1 em{font-style:normal;color:var(--accent)}
+.hero p.sub{margin-top:20px;color:var(--muted);font-size:1.1rem;max-width:52ch}
+.cta{display:flex;flex-wrap:wrap;gap:12px;margin-top:28px}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:11px 18px;border-radius:8px;font-weight:500;text-decoration:none;border:1px solid var(--line);background:var(--surface);color:var(--ink);font-size:.95rem;cursor:pointer;font-family:inherit}
+.btn.pri{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn:hover{filter:brightness(1.06)}
+.meta{display:flex;flex-wrap:wrap;gap:8px 24px;margin-top:32px;font-size:.85rem;color:var(--muted)}
+.meta b{color:var(--ink);font-weight:600}
+.statrow{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-top:48px}
+.stat{background:var(--surface);padding:18px 16px}
+.stat b{display:block;font:700 1.9rem/1 var(--f-display);font-variant-numeric:tabular-nums}
+.stat span{font-size:.8rem;color:var(--muted)}
+
+/* compare slider */
+.cmp{--pos:50%;position:relative;background:var(--scan);border-radius:12px;overflow:hidden;aspect-ratio:1/1;user-select:none;touch-action:pan-y;border:1px solid var(--line)}
+.cmp img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;display:block;pointer-events:none}
+.cmp .top-img{clip-path:inset(0 0 0 var(--pos))}
+.cmp .bar{position:absolute;top:0;bottom:0;left:var(--pos);width:3px;margin-left:-1.5px;background:#fff;pointer-events:none}
+.cmp .knob{position:absolute;top:50%;left:var(--pos);width:44px;height:44px;margin:-22px 0 0 -22px;border-radius:50%;background:rgba(10,10,10,.55);border:3px solid #fff;display:flex;align-items:center;justify-content:center;color:#fff;font-size:.8rem;gap:4px;pointer-events:none}
+.cmp input[type=range]{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:ew-resize;margin:0;touch-action:pan-y}
+.cmp:focus-within .knob{outline:3px solid var(--accent);outline-offset:2px}
+.chip{position:absolute;top:12px;font:500 .7rem var(--f-mono);letter-spacing:.06em;text-transform:uppercase;background:rgba(0,0,0,.62);color:#fff;padding:5px 9px;border-radius:5px;pointer-events:none}
+.chip.l{left:12px}.chip.r{right:12px}
+.cap{font-size:.85rem;color:var(--muted);margin-top:10px;text-align:center}
+
+/* problem */
+.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:48px;align-items:start}
+.gaps{display:grid;gap:12px;margin-top:8px;padding:0;list-style:none}
+.gaps li{display:grid;grid-template-columns:34px 1fr;gap:14px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+.gaps .n{font:500 .8rem var(--f-mono);color:var(--accent);padding-top:2px}
+.gaps b{display:block;font-weight:600}
+.gaps span{color:var(--muted);font-size:.92rem}
+.photo{border-radius:12px;overflow:hidden;border:1px solid var(--line);background:#fff}
+.photo img{display:block;width:100%}
+.callout{margin-top:20px;border-left:3px solid var(--accent);padding:4px 0 4px 16px;color:var(--muted)}
+
+/* objectives */
+.objs{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}
+@media (min-width:1100px){.objs{grid-template-columns:repeat(5,minmax(0,1fr))}}
+.obj{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:22px}
+.obj .k{font:500 .72rem var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--accent)}
+.obj h3{margin:10px 0 8px}
+.obj p{color:var(--muted);font-size:.93rem}
+.obj.wide{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.obj.wide .k,.obj.wide p{color:inherit;opacity:.9}
+
+/* method */
+.method{display:grid;grid-template-columns:240px minmax(0,1fr);gap:28px;align-items:start}
+.tabs{display:flex;flex-direction:column;gap:4px;position:sticky;top:76px}
+.tab{display:flex;gap:10px;align-items:baseline;text-align:left;padding:10px 12px;border:1px solid transparent;border-radius:8px;background:none;color:var(--muted);font:500 .9rem var(--f-body);cursor:pointer}
+.tab i{font:500 .72rem var(--f-mono);font-style:normal;color:var(--accent);min-width:1.4em}
+.tab:hover{background:var(--surface2);color:var(--ink)}
+.tab[aria-selected=true]{background:var(--surface);border-color:var(--line);color:var(--ink)}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:28px;min-width:0}
+.panel h3{font-size:1.6rem;margin-bottom:10px}
+.panel .desc{color:var(--muted);max-width:68ch}
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:20px 0}
+.fact{background:var(--surface2);border-radius:8px;padding:10px 12px}
+.fact b{display:block;font:500 1.02rem var(--f-mono);font-variant-numeric:tabular-nums}
+.fact span{font-size:.76rem;color:var(--muted)}
+.figs{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-start;margin-top:6px}
+.figs figure{margin:0;flex:1 1 220px;min-width:0}
+.figs img{width:100%;display:block;border-radius:8px;border:1px solid var(--line);background:#fff}
+figcaption{font-size:.78rem;color:var(--muted);margin-top:6px}
+.badge{display:inline-block;font:500 .7rem var(--f-mono);padding:3px 8px;border-radius:5px;text-transform:uppercase;letter-spacing:.06em}
+.b-done{background:color-mix(in srgb,var(--good) 18%,transparent);color:var(--good)}
+.b-prog{background:color-mix(in srgb,var(--warn) 20%,transparent);color:var(--warn)}
+.archfig{margin:40px 0 0;background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px;overflow-x:auto}
+.archfig img{display:block;min-width:760px;width:100%}
+.archfig-wrap figcaption{margin-top:10px}
+.maths{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin-top:28px}
+.math{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:20px;min-width:0}
+.math h3{font-size:1rem;margin-bottom:10px}
+.math code{display:block;font:400 .95rem/1.7 var(--f-mono);background:var(--surface2);padding:12px;border-radius:8px;overflow-x:auto;white-space:pre}
+.math p{font-size:.85rem;color:var(--muted);margin-top:10px}
+
+/* demo */
+.demo{background:var(--surface2);margin-inline:calc(-1*max(16px,env(safe-area-inset-left,0px)));padding-inline:max(16px,env(safe-area-inset-left,0px))}
+.demo-grid{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:40px;align-items:start}
+.seg{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+.seg button{border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:8px 14px;border-radius:999px;font:500 .88rem var(--f-body);cursor:pointer}
+.seg button[aria-pressed=true]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.seg-label{font:500 .72rem var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:0 0 8px}
+.readout{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:20px}
+.readout h3{margin-bottom:4px}
+.m{display:grid;grid-template-columns:1fr auto;gap:2px 12px;margin-top:16px}
+.m dt{font-size:.85rem;color:var(--muted)}
+.m dd{margin:0;font:500 1rem var(--f-mono);font-variant-numeric:tabular-nums;text-align:right}
+.delta{font-size:.78rem;padding:2px 7px;border-radius:5px;margin-left:8px}
+.up{background:color-mix(in srgb,var(--good) 18%,transparent);color:var(--good)}
+.down{background:color-mix(in srgb,var(--bad) 18%,transparent);color:var(--bad)}
+.mrow{padding:12px 0;border-top:1px solid var(--line)}
+.mrow:first-of-type{border-top:0}
+.note{font-size:.85rem;color:var(--muted);margin-top:16px}
+
+/* results */
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:28px}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:20px}
+.tile b{display:block;font:700 2.3rem/1 var(--f-display);font-variant-numeric:tabular-nums}
+.tile span{display:block;margin-top:8px;font-size:.85rem;color:var(--muted)}
+.tile small{display:block;font:400 .72rem var(--f-mono);color:var(--good);margin-top:6px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:24px;min-width:0}
+.card h3{margin-bottom:6px}
+.card .sub{font-size:.88rem;color:var(--muted);margin-bottom:18px}
+.legend{display:flex;gap:16px;font-size:.8rem;color:var(--muted);margin-bottom:14px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px}
+.bars{display:grid;gap:14px}
+.bar-row{display:grid;grid-template-columns:70px minmax(0,1fr) 120px;gap:12px;align-items:center;font-size:.88rem}
+.track{position:relative;height:22px;background:var(--surface2);border-radius:4px}
+.track .a,.track .b{position:absolute;left:0;height:9px;border-radius:2px}
+.track .a{top:2px;background:#8a7f84}
+.track .b{top:11px;background:var(--accent)}
+.bar-row .v{font:400 .78rem var(--f-mono);text-align:right;font-variant-numeric:tabular-nums;color:var(--muted)}
+.res-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:16px}
+table{width:100%;border-collapse:collapse;font-size:.9rem}
+th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+th{font:500 .72rem var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+td.num,th.num{text-align:right;font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.tscroll{overflow-x:auto}
+.honest{margin-top:24px;background:var(--accent-soft);border-radius:12px;padding:18px 20px;color:var(--ink);font-size:.93rem}
+.honest b{color:var(--accent)}
+
+/* progress */
+.prog{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:28px;align-items:start}
+.meter{height:14px;background:var(--surface2);border-radius:99px;overflow:hidden;margin:12px 0 4px}
+.meter i{display:block;height:100%;width:60%;background:var(--accent);border-radius:99px}
+.todo{list-style:none;padding:0;margin:0;display:grid;gap:10px}
+.todo li{display:flex;justify-content:space-between;gap:12px;padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+.todo em{font:normal .72rem var(--f-mono);color:var(--warn);align-self:center;white-space:nowrap}
+
+/* docs */
+.docs{align-items:start;display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
+.doc{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:0;overflow:hidden}
+.doc summary{cursor:pointer;padding:18px 20px;font:600 1.02rem var(--f-display);list-style:none;display:flex;justify-content:space-between;gap:12px;align-items:center}
+.doc summary::-webkit-details-marker{display:none}
+.doc summary::after{content:"+";font:400 1.4rem var(--f-mono);color:var(--accent)}
+.doc[open] summary::after{content:"–"}
+.doc .in{padding:0 20px 20px;color:var(--muted);font-size:.92rem;display:grid;gap:10px}
+.doc .in code{font:400 .84rem var(--f-mono);background:var(--surface2);padding:2px 6px;border-radius:4px;color:var(--ink)}
+.doc img{width:100%;border-radius:8px;border:1px solid var(--line);background:#fff}
+.doc ul{margin:0;padding-left:18px;display:grid;gap:4px}
+.refs{display:grid;gap:10px;margin-top:28px;padding:0;list-style:none;counter-reset:r}
+.refs li{counter-increment:r;display:grid;grid-template-columns:32px 1fr;gap:10px;font-size:.92rem}
+.refs li::before{content:"[" counter(r) "]";font:400 .8rem var(--f-mono);color:var(--accent);padding-top:2px}
+.refs a{word-break:break-word}
+
+/* videos */
+.vids{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px}
+.vid{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.vid .screen{aspect-ratio:16/9;background:var(--scan);display:grid;place-items:center;color:var(--scan-ink);position:relative}
+.vid .screen video{position:absolute;inset:0;width:100%;height:100%;background:#000}
+.play{width:62px;height:62px;border-radius:50%;border:2px solid rgba(255,255,255,.7);display:grid;place-items:center}
+.play::after{content:"";border-left:18px solid #fff;border-block:11px solid transparent;margin-left:5px}
+.vid .txt{padding:16px 18px}
+.vid h3{font-size:1.05rem;margin-bottom:4px}
+.vid p{font-size:.88rem;color:var(--muted)}
+.vid .soon{font:500 .7rem var(--f-mono);letter-spacing:.08em;text-transform:uppercase;position:absolute;bottom:10px;left:12px;color:#c9d0d3}
+
+/* team */
+.team{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+.member{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.member img{width:100%;aspect-ratio:4/5;object-fit:cover;object-position:center top;display:block;background:#ddd}
+.member .t{padding:14px 16px}
+.member b{display:block;font:600 1.05rem var(--f-display)}
+.member span{font:400 .76rem var(--f-mono);color:var(--muted);word-break:break-all}
+.guide{display:flex;gap:18px;align-items:center;margin-top:16px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px 22px;flex-wrap:wrap}
+.guide b{font:600 1.1rem var(--f-display)}
+.guide span{color:var(--muted);font-size:.92rem}
+
+/* links */
+.links{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+.link{display:block;text-decoration:none;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px 20px}
+.link:hover{border-color:var(--accent)}
+.link b{display:flex;justify-content:space-between;font:600 1.05rem var(--f-display)}
+.link b::after{content:"↗";color:var(--accent)}
+.link span{font-size:.85rem;color:var(--muted);display:block;margin-top:6px}
+
+footer{border-top:1px solid var(--line);padding-block:36px;margin-top:24px;color:var(--muted);font-size:.85rem}
+footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;align-items:center}
+footer img{height:44px;border-radius:4px;background:#fff}
+
+@media (max-width:900px){
+  .hero-grid,.two,.demo-grid,.prog{grid-template-columns:minmax(0,1fr);gap:32px}
+  .method{grid-template-columns:minmax(0,1fr)}
+  .tabs{position:static;flex-direction:row;overflow-x:auto;padding-bottom:6px}
+  .tab{white-space:nowrap}
+  .team{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .statrow{grid-template-columns:repeat(2,minmax(0,1fr))}
+  section{padding-block:56px}
+  .bar-row{grid-template-columns:62px minmax(0,1fr)}
+  .bar-row .v{grid-column:2;text-align:left}
+}
+@media (max-width:480px){.team{grid-template-columns:minmax(0,1fr)}.panel{padding:20px}}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+</style>
+</head><body>
+
+
+
+
+
+
+
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="#top">US<span>Enhance</span> · Team 17</a>
+    <nav aria-label="Sections">
+      <a href="#problem">Problem</a><a href="#objectives">Objectives</a><a href="#method">Methodology</a><a href="#demo">Live comparison</a><a href="#results">Results</a><a href="#progress">Progress</a><a href="#docs">Documentation</a><a href="#videos">Videos</a><a href="#team">Team</a><a href="#code">GitHub</a>
+    </nav>
+    <button class="theme" id="theme" aria-label="Toggle dark and light theme" title="Toggle theme">◐</button>
+  </div>
+</header>
+
+<main id="top">
+<!-- HERO -->
+<section class="hero" style="padding-top:48px">
+  <div class="wrap">
+    <div class="hero-grid">
+      <div>
+        <span class="tag">23CSE498 · Project Phase 2 · Research Project</span>
+        <h1>Multi-organ ultrasound, <em>cleaned up</em> without losing the anatomy.</h1>
+        <p class="sub">A multi-task deep learning pipeline that removes speckle noise and restores texture in handheld ultrasound images, while recognising the organ and segmenting its structures.</p>
+        <div class="cta">
+          <a class="btn pri" href="#demo">Try the comparison slider</a>
+          <a class="btn" href="https://github.com/Ultrasound-Image-Enhancement" target="_blank" rel="noopener">GitHub repository</a>
+          <a class="btn" href="#docs">Documentation</a>
+        </div>
+        <div class="meta">
+          <span>Guide <b>Dr. Suchithra M</b></span>
+          <span>Dept. of CSE, Amrita Vishwa Vidyapeetham</span>
+        </div>
+      </div>
+      <div>
+        <div class="cmp" id="heroCmp" data-a="assets/liver-lq.jpg" data-b="assets/liver-enh.jpg" data-la="Noisy input" data-lb="Enhanced"></div>
+        <p class="cap">Liver, held-out validation image. Drag the slider to reveal the enhanced result.</p>
+      </div>
+    </div>
+    <div class="statrow" aria-label="Headline numbers">
+      <div class="stat"><b>5</b><span>organs: breast, thyroid, liver, kidney, carotid</span></div>
+      <div class="stat"><b>840</b><span>paired low / high quality images</span></div>
+      <div class="stat"><b>+3.49 dB</b><span>average PSNR gain over the noisy input</span></div>
+      <div class="stat"><b>95.6%</b><span>organ classification accuracy (n = 160)</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- PROBLEM -->
+<section id="problem">
+  <div class="wrap two">
+    <div>
+      <span class="eyebrow">Problem statement</span>
+      <h2>Handheld ultrasound is everywhere. Its image quality is not.</h2>
+      <p class="lede">Ultrasound is non-invasive and works at the point of care, and handheld probes bring it to resource-limited settings. Their hardware constraints add speckle noise, lower spatial resolution and artifacts, which reduces diagnostic reliability compared with full-scale systems.</p>
+      <p class="lede">Deep learning enhancement can close that gap, but existing methods tend to smooth away real tissue detail or invent structures that are not there.</p>
+      <div class="photo" style="margin-top:24px;max-width:420px"><img src="assets/handheld.jpg" alt="A handheld ultrasound probe paired with a phone showing a cardiac scan"></div>
+    </div>
+    <div>
+      <span class="eyebrow">Research gaps</span>
+      <ol class="gaps">
+        <li><span class="n">G1</span><div><b>Speckle and artifacts</b><span>Speckle noise, low spatial resolution and imaging artifacts remain in handheld scans.</span></div></li>
+        <li><span class="n">G2</span><div><b>No multi-organ consistency</b><span>Most models are tuned for one organ and have no semantic awareness of what they are enhancing.</span></div></li>
+        <li><span class="n">G3</span><div><b>Over-smoothing</b><span>Removing noise often erases fine anatomical detail.</span></div></li>
+        <li><span class="n">G4</span><div><b>Anatomical hallucination</b><span>Generative enhancement can add structures that do not exist.</span></div></li>
+        <li><span class="n">G5</span><div><b>Extreme variability</b><span>Anatomy and image appearance vary widely between patients and organs.</span></div></li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<!-- OBJECTIVES -->
+<section id="objectives" style="background:var(--surface2);margin-inline:calc(-1*max(16px,env(safe-area-inset-left,0px)));padding-inline:max(16px,env(safe-area-inset-left,0px))">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow">Project objectives</span>
+      <h2>One architecture, four tasks, one downstream goal.</h2>
+      <p class="lede">Develop a multi-task architecture for ultrasound images from handheld devices, then use the enhanced, structure-preserving images for accurate disease prediction and clinical decision support.</p>
+    </div>
+    <div class="objs">
+      <div class="obj"><span class="k">Task 1</span><h3>Anatomy-aware speckle reduction</h3><p>Suppress noise while keeping tissue boundaries intact.</p></div>
+      <div class="obj"><span class="k">Task 2</span><h3>Texture enhancement</h3><p>Recover the fine texture that low-end hardware loses.</p></div>
+      <div class="obj"><span class="k">Task 3</span><h3>Organ classification</h3><p>Identify which organ is being imaged, so enhancement can be organ-aware.</p></div>
+      <div class="obj"><span class="k">Task 4</span><h3>Semantic segmentation</h3><p>Produce pixel-wise anatomical masks that guide the denoiser.</p></div>
+      <div class="obj wide"><span class="k">Downstream goal</span><h3>Disease prediction</h3><p>Feed enhanced images and segmentation maps into a binary disease presence classifier.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- METHOD -->
+<section id="method">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow">Methodology</span>
+      <h2>USFM-guided latent diffusion with pixel refinement.</h2>
+      <p class="lede">Training happens in a compressed latent space to keep the cost low on limited GPUs. A frozen ultrasound foundation model supplies the semantic guidance, and a small pixel-space network restores fine speckle at the end.</p>
+    </div>
+    <div class="method">
+      <div class="tabs" role="tablist" aria-label="Pipeline modules" id="tabs"></div>
+      <div class="panel" id="panel" role="tabpanel" aria-live="polite"></div>
+    </div>
+    <div class="archfig-wrap" style="margin-top:40px">
+      <div class="archfig"><img src="assets/architecture.jpg" alt="Full architecture: input and representation, frozen representation modules, latent diffusion enhancement, and pixel-level refinement"></div>
+      <p class="cap">Full architecture. Scroll sideways on small screens.</p>
+    </div>
+    <div class="maths">
+      <div class="math"><h3>Forward diffusion</h3><code>z_t = √ᾱ_t · z₀ + √(1 − ᾱ_t) · ε
+ε ~ N(0, I)</code><p>z₀ is the clean latent, z_t the noisy latent at step t, and ᾱ_t the cumulative noise schedule.</p></div>
+      <div class="math"><h3>Cross-attention (USFM guidance)</h3><code>Attention(Q,K,V) =
+  softmax( Q·Kᵀ / √d_k ) · V</code><p>Q comes from the noisy latent. K and V come from the USFM embedding F_usfm, which is how organ awareness steers denoising.</p></div>
+      <div class="math"><h3>Total loss</h3><code>L = 1.0·L_enhance
+  + 0.01·L_cls + 0.05·L_seg</code><p>Noise-prediction loss is the main objective. Organ cross-entropy and segmentation loss are auxiliary.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- DEMO -->
+<section id="demo" class="demo">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow">Live comparison</span>
+      <h2>Slide to see what the model changes.</h2>
+      <p class="lede">One held-out validation image per organ. Compare the noisy input with the enhanced output, the enhanced output with the ground truth, or the input with the anatomy map from the USFM segmentation head.</p>
+    </div>
+    <div class="demo-grid">
+      <div>
+        <p class="seg-label">Organ</p>
+        <div class="seg" id="organSeg"></div>
+        <p class="seg-label">Compare</p>
+        <div class="seg" id="modeSeg"></div>
+        <div class="cmp" id="demoCmp"></div>
+        <p class="cap" id="demoCap">Use the slider to reveal the enhanced image.</p>
+      </div>
+      <div class="readout" id="readout"></div>
+    </div>
+  </div>
+</section>
+
+<!-- RESULTS -->
+<section id="results">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow">Results</span>
+      <h2>Clear gains in PSNR, mixed results in SSIM.</h2>
+      <p class="lede">Evaluation uses one validation sample per organ, scored against the high-quality ground truth. Classification and segmentation use the 160-image validation split.</p>
+    </div>
+    <div class="tiles">
+      <div class="tile"><b>22.80 dB</b><span>Average PSNR (noisy input: 19.32 dB)</span><small>+3.49 dB</small></div>
+      <div class="tile"><b>0.683</b><span>Average SSIM (noisy input: 0.616)</span><small>+0.067</small></div>
+      <div class="tile"><b>95.6%</b><span>Organ classification accuracy</span></div>
+      <div class="tile"><b>0.760</b><span>Segmentation Dice vs. structural proxy mask</span></div>
+    </div>
+    <div class="res-grid">
+      <div class="card">
+        <h3>PSNR by organ</h3>
+        <p class="sub">Higher is better. Noisy input vs. enhanced output.</p>
+        <div class="legend"><span><i style="background:#8a7f84"></i>Noisy input</span><span><i style="background:var(--accent)"></i>Enhanced</span></div>
+        <div class="bars" id="psnrBars"></div>
+      </div>
+      <div class="card">
+        <h3>SSIM by organ</h3>
+        <p class="sub">Higher is better. Noisy input vs. enhanced output.</p>
+        <div class="legend"><span><i style="background:#8a7f84"></i>Noisy input</span><span><i style="background:var(--accent)"></i>Enhanced</span></div>
+        <div class="bars" id="ssimBars"></div>
+      </div>
+      <div class="card">
+        <h3>Organ classification</h3>
+        <p class="sub">USFM classification head, validation split.</p>
+        <div class="tscroll"><table>
+          <thead><tr><th>Organ</th><th class="num">Accuracy</th><th class="num">Images</th></tr></thead>
+          <tbody>
+            <tr><td>Breast</td><td class="num">100.0%</td><td class="num">31</td></tr>
+            <tr><td>Thyroid</td><td class="num">100.0%</td><td class="num">43</td></tr>
+            <tr><td>Carotid</td><td class="num">94.9%</td><td class="num">39</td></tr>
+            <tr><td>Kidney</td><td class="num">89.5%</td><td class="num">19</td></tr>
+            <tr><td>Liver</td><td class="num">89.3%</td><td class="num">28</td></tr>
+            <tr><td><b>Overall</b></td><td class="num"><b>95.6%</b></td><td class="num"><b>160</b></td></tr>
+          </tbody></table></div>
+      </div>
+      <div class="card">
+        <h3>Training convergence</h3>
+        <p class="sub">Total loss over 100 epochs falls from about 0.42 to about 0.21.</p>
+        <div class="photo"><img src="assets/loss-curve.jpg" alt="Training loss convergence curve over 100 epochs"></div>
+      </div>
+    </div>
+    <div class="honest"><b>Reading these numbers.</b> PSNR improves for every organ. SSIM improves for carotid, liver and kidney, and drops for breast (−0.068) and thyroid (−0.058). The VAE that compresses images into latents limits the best achievable quality (about 29 dB PSNR and 0.75 SSIM on ground-truth images), which is why the pixel-space refiner is the next stage.</div>
+  </div>
+</section>
+
+<!-- PROGRESS -->
+<section id="progress" style="background:var(--surface2);margin-inline:calc(-1*max(16px,env(safe-area-inset-left,0px)));padding-inline:max(16px,env(safe-area-inset-left,0px))">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow">Project progress</span>
+      <h2>About 60% complete, with the full chain integrated.</h2>
+    </div>
+    <div class="prog">
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;font-size:.9rem"><b>Overall implementation</b><span style="font-family:var(--f-mono)">≈ 60%</span></div>
+        <div class="meter" role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" aria-label="Overall progress"><i></i></div>
+        <div class="tscroll" style="margin-top:14px"><table>
+          <thead><tr><th>Module</th><th>Current state</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr><td>Data ingestion</td><td>Paired LQ/HQ loader, 5 organs, 256×256, synchronized augmentation</td><td><span class="badge b-done">Functional</span></td></tr>
+            <tr><td>VAE compression</td><td>Frozen pretrained VAE, round-trip PSNR/SSIM verified</td><td><span class="badge b-done">Functional</span></td></tr>
+            <tr><td>USFM backbone</td><td>ViT-base with classification and segmentation heads</td><td><span class="badge b-done">Functional</span></td></tr>
+            <tr><td>Swin-Diffusion U-Net</td><td>Cross-attention guided, 8-channel input, ablation-verified</td><td><span class="badge b-done">Functional</span></td></tr>
+            <tr><td>Training</td><td>Composite loss, AdamW, resumable checkpoints, 100+ epochs</td><td><span class="badge b-prog">In progress</span></td></tr>
+            <tr><td>Pixel refiner</td><td>U-Net residual refiner targeting SSIM &gt; 0.90</td><td><span class="badge b-prog">In progress</span></td></tr>
+            <tr><td>Integration</td><td>Dataset → VAE → USFM → Diffusion → Refiner → Metrics</td><td><span class="badge b-done">Integrated</span></td></tr>
+          </tbody></table></div>
+      </div>
+      <div>
+        <h3 style="margin-bottom:14px">Plan for the coming weeks</h3>
+        <ul class="todo">
+          <li>Improve organ-wise evaluation metrics <em>ONGOING</em></li>
+          <li>Test the complete pipeline <em></em></li>
+          <li>Implement binary-class disease prediction <em></em></li>
+          <li>Complete coursework <em>ONGOING</em></li>
+          <li>Prepare research paper draft <em>ONGOING</em></li>
+          <li>Develop the web application <em></em></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DOCS -->
+<section id="docs">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow">Documentation</span>
+      <h2>Everything needed to understand and rerun the work.</h2>
+    </div>
+    <div class="docs">
+      <details class="doc" open><summary>Dataset and preprocessing</summary><div class="in">
+        <p>840 paired low-quality / high-quality images across breast, thyroid, liver, kidney and carotid, from the USenhance2023 Grand Challenge (aligned version on Hugging Face).</p>
+        <ul><li>Resize to 256 × 256</li><li>Normalise intensities from [0, 1] to [−1, 1]</li><li>Training only: matched horizontal flip and rotation ±15° applied to both images</li></ul>
+        <img src="assets/pre-flow.jpg" alt="Preprocessing flow" style="max-width:260px">
+      </div></details>
+      <details class="doc"><summary>Hyperparameters</summary><div class="in">
+        <table><tbody>
+          <tr><td>Optimizer</td><td class="num">AdamW</td></tr>
+          <tr><td>Learning rate</td><td class="num">1e-4</td></tr>
+          <tr><td>Batch size</td><td class="num">4</td></tr>
+          <tr><td>Epochs</td><td class="num">100+</td></tr>
+          <tr><td>λ enhance / cls / seg</td><td class="num">1.0 / 0.01 / 0.05</td></tr>
+          <tr><td>Latent size</td><td class="num">4 × 32 × 32</td></tr>
+          <tr><td>Frozen ViT parameters</td><td class="num">85.8 M</td></tr>
+          <tr><td>Trainable head parameters</td><td class="num">3.84 M</td></tr>
+        </tbody></table>
+        <p>Working in latent space is about 8× cheaper than pixel-space diffusion, which suits limited GPU resources.</p>
+      </div></details>
+      <details class="doc"><summary>Loss functions</summary><div class="in">
+        <img src="assets/loss-functions.jpg" alt="Diffusion enhancement, organ classification and segmentation losses combined into a weighted total">
+      </div></details>
+      <details class="doc"><summary>VAE round-trip check</summary><div class="in">
+        <p>Encode then decode each organ to measure how much the latent space preserves before any diffusion training.</p>
+        <table><thead><tr><th>Organ</th><th class="num">PSNR (dB)</th><th class="num">SSIM</th></tr></thead><tbody>
+          <tr><td>Liver</td><td class="num">32.07</td><td class="num">0.877</td></tr>
+          <tr><td>Thyroid</td><td class="num">29.00</td><td class="num">0.734</td></tr>
+          <tr><td>Carotid</td><td class="num">28.52</td><td class="num">0.776</td></tr>
+          <tr><td>Kidney</td><td class="num">28.22</td><td class="num">0.782</td></tr>
+          <tr><td>Breast</td><td class="num">26.49</td><td class="num">0.629</td></tr>
+        </tbody></table>
+      </div></details>
+      <details class="doc"><summary>Cross-attention ablation</summary><div class="in">
+        <p>The same noisy latent is denoised once with real USFM guidance and once with a zeroed context vector. A non-zero output difference confirms the guidance is wired into the network.</p>
+        <ul><li>Mean absolute difference: <code>1.037</code></li><li>Max absolute difference: <code>2.967</code></li></ul>
+      </div></details>
+      <details class="doc"><summary>Inference experiments</summary><div class="in">
+        <p>Findings from a one-batch sweep on the validation set (no retraining). Iterative 50-step sampling from pure noise drifted from the input, while a single bounded correction step scored higher.</p>
+        <table><thead><tr><th>Setting</th><th class="num">PSNR</th><th class="num">SSIM</th></tr></thead><tbody>
+          <tr><td>Noisy input</td><td class="num">18.14</td><td class="num">0.599</td></tr>
+          <tr><td>Multi-step DDIM, strength 0.2</td><td class="num">17.92</td><td class="num">0.373</td></tr>
+          <tr><td>One-shot, t = 400</td><td class="num">21.55</td><td class="num">0.617</td></tr>
+          <tr><td>One-shot + detail blend α = 0.5</td><td class="num">21.69</td><td class="num">0.659</td></tr>
+        </tbody></table>
+      </div></details>
+      <details class="doc"><summary>Notebook map</summary><div class="in">
+        <ul><li>Phase 0: environment and Drive setup</li><li>Phase 1: paired dataset pipeline</li><li>Phase 2: VAE round-trip test</li><li>Phase 3: USFM backbone with two heads</li><li>Phase 4: Swin-Diffusion U-Net</li><li>Phase 5: cross-attention check</li><li>Phase 6: synchronized augmentation check</li><li>Phase 7: joint training, resumable</li><li>Phase 8: bounded diffusion sampling</li><li>Phase 10: evaluation, USFM validation, quality metrics</li></ul>
+        <a href="https://colab.research.google.com/drive/1wgYviXHNSkZ6mn2ddFmc1ElN37h7N3-v?usp=sharing" target="_blank" rel="noopener">Open the multi-organ notebook ↗</a>
+      </div></details>
+    </div>
+    <h3 style="margin-top:44px">References</h3>
+    <ol class="refs">
+      <li><a href="https://www.researchgate.net/publication/330077657_A_Study_on_Preprocessing_Techniques_for_Ultrasound_Images_of_Carotid_Artery" target="_blank" rel="noopener">A Study on Preprocessing Techniques for Ultrasound Images of Carotid Artery</a></li>
+      <li><a href="https://ieeexplore.ieee.org/document/10879338" target="_blank" rel="noopener">IEEE Xplore document 10879338</a></li>
+      <li><a href="https://pubs.aip.org/aip/acp/article-abstract/3214/1/020043/3318706/Enhanced-U-net-architecture-for-ultrasound-image?redirectedFrom=fulltext" target="_blank" rel="noopener">Enhanced U-net Architecture for Ultrasound Image Enhancement</a></li>
+      <li><a href="https://huggingface.co/datasets/Jason0411202/USenhance2023_Aligned" target="_blank" rel="noopener">USenhance2023 Aligned Dataset, Hugging Face</a></li>
+      <li><a href="https://ultrasoundenhance2023.grand-challenge.org/" target="_blank" rel="noopener">UltrasoundEnhance2023 Grand Challenge</a></li>
+      <li><a href="https://arxiv.org/abs/2105.05537" target="_blank" rel="noopener">Latent Diffusion Models (arXiv 2105.05537)</a></li>
+      <li><a href="https://soheilfallah.com/articles/latent-diffusion-models-medical-imaging-guide" target="_blank" rel="noopener">Latent Diffusion Models for Medical Imaging: A Guide</a></li>
+    </ol>
+  </div>
+</section>
+
+<!-- VIDEOS -->
+<section id="videos" style="background:var(--surface2);margin-inline:calc(-1*max(16px,env(safe-area-inset-left,0px)));padding-inline:max(16px,env(safe-area-inset-left,0px))">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow">Demonstration videos</span>
+      <h2>See the pipeline run.</h2>
+      <p class="lede">Add your recordings in the <code style="font-family:var(--f-mono)">VIDEOS</code> list at the top of the script. A direct .mp4 plays inline; any other link opens in a new tab.</p>
+    </div>
+    <div class="vids" id="vids"></div>
+  </div>
+</section>
+
+<!-- TEAM -->
+<section id="team">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow">Team 17</span>
+      <h2>The people behind it.</h2>
+    </div>
+    <div class="team">
+      <div class="member"><img src="assets/team-aravind.jpg" alt="Aravind RK"><div class="t"><b>Aravind RK</b><span>CB.SC.U4CSE23108</span></div></div>
+      <div class="member"><img src="assets/team-saran.jpg" alt="Saran Hiruthik M"><div class="t"><b>Saran Hiruthik M</b><span>CB.SC.U4CSE23745</span></div></div>
+      <div class="member"><img src="assets/team-shruti.jpg" alt="Shruti Shri A"><div class="t"><b>Shruti Shri A</b><span>CB.SC.U4CSE23746</span></div></div>
+      <div class="member"><img src="assets/team-sanjana.jpg" alt="V Sanjana"><div class="t"><b>V Sanjana</b><span>CB.SC.U4CSE23751</span></div></div>
+    </div>
+    <div class="guide"><div><b>Dr. Suchithra M</b><br><span>Project guide · Assistant Professor, Department of CSE</span></div></div>
+  </div>
+</section>
+
+<!-- LINKS -->
+<section id="code" style="padding-top:0">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow">Code and resources</span>
+      <h2>Repository and notebooks.</h2>
+    </div>
+    <div class="links">
+      <a class="link" href="https://github.com/Ultrasound-Image-Enhancement" target="_blank" rel="noopener"><b>GitHub repository</b><span>Source code for the full pipeline</span></a>
+      <a class="link" href="https://colab.research.google.com/drive/1wgYviXHNSkZ6mn2ddFmc1ElN37h7N3-v?usp=sharing" target="_blank" rel="noopener"><b>Colab: multi-organ</b><span>Five-organ training and evaluation</span></a>
+      <a class="link" href="https://colab.research.google.com/drive/1l4eZHDSOkkwDkPtzDnq8gImNV2n_X3YB?usp=sharing" target="_blank" rel="noopener"><b>Colab: single organ</b><span>Breast-only baseline notebook</span></a>
+      <a class="link" href="https://drive.google.com/drive/folders/1i-L-WyP8DlPmHRi3VBlqJaaNGFGAZYKl?usp=sharing" target="_blank" rel="noopener"><b>Architecture diagrams</b><span>High-resolution figures on Drive</span></a>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div style="display:flex;gap:16px;align-items:center"><img src="assets/amrita-logo.jpg" alt="Amrita Vishwa Vidyapeetham"><span>Multi-Organ Anatomy Preserving Speckle Reduction and Texture Enhancement in Ultrasound Images<br>23CSE498 · Team 17 · October 2026</span></div>
+    <span>Built as a course project website.</span>
+  </div>
+</footer>
+
+<script>
+/* ---- EDIT ME: demonstration videos ---- */
+var VIDEOS = [
+  /* { title:"End-to-end demo", desc:"Noisy scan in, enhanced scan and organ label out.", url:"assets/demo.mp4" }, */
+];
+
+var ORGANS = {
+  breast:  {name:"Breast",  psnr0:15.19, psnr1:21.21, ssim0:0.6165, ssim1:0.5484},
+  carotid: {name:"Carotid", psnr0:21.84, psnr1:23.00, ssim0:0.4901, ssim1:0.6851},
+  liver:   {name:"Liver",   psnr0:20.20, psnr1:24.90, ssim0:0.6422, ssim1:0.7671},
+  thyroid: {name:"Thyroid", psnr0:20.20, psnr1:21.59, ssim0:0.7047, ssim1:0.6465},
+  kidney:  {name:"Kidney",  psnr0:19.15, psnr1:23.33, ssim0:0.6283, ssim1:0.7669}
+};
+var MODES = {
+  enh:  {label:"Input ↔ Enhanced", a:"lq",  b:"enh",  la:"Noisy input", lb:"Enhanced", cap:"Drag to reveal the enhanced image."},
+  gt:   {label:"Enhanced ↔ Ground truth", a:"enh", b:"hq", la:"Enhanced", lb:"Ground truth", cap:"Drag to compare the output with the high-quality target."},
+  mask: {label:"Input ↔ Anatomy map", a:"lq", b:"mask", la:"Noisy input", lb:"USFM mask", cap:"Drag to reveal the anatomy map from the USFM segmentation head."}
+};
+var MODULES = [
+ {t:"Preprocessing", s:"done", d:"Paired low-quality and high-quality images are loaded together, resized to 256 × 256 and normalised to [−1, 1]. During training the same random flip and ±15° rotation is applied to both images so they stay aligned.", f:[["256×256","image size"],["[−1, 1]","intensity range"],["±15°","synced rotation"]], g:[["pre-flow.jpg","Preprocessing flow"],["pre-samples.jpg","Input / target pairs per organ"]]},
+ {t:"VAE latent space", s:"done", d:"A frozen pretrained VAE (sd-vae-ft-mse) compresses each image into a 4 × 32 × 32 latent, an 8× spatial reduction. A round-trip check measures how much structure survives before diffusion training starts.", f:[["4×32×32","latent"],["8×","spatial compression"],["Frozen","weights"]], g:[["vae-flow.jpg","VAE compression pipeline"],["vae-roundtrip.jpg","Round-trip reconstruction"]]},
+ {t:"USFM foundation model", s:"done", d:"A Vision Transformer in the style of the Universal Ultrasound Foundation Model learns general ultrasound understanding by reconstructing hidden patches. Its dense patch embeddings carry the organ and structure context used later for guidance.", f:[["ViT-B/16","backbone"],["768-d","patch embeddings"],["85.8 M","frozen params"]], g:[["usfm-pretrain.jpg","Masked-patch pretraining idea"],["usfm-arch.jpg","Backbone and heads"]]},
+ {t:"Classification and segmentation", s:"done", d:"Two light heads sit on the USFM embeddings. One answers which organ this is, the other answers where the structures are. Both outputs, plus the embeddings, steer the diffusion model through cross-attention.", f:[["5-way","organ softmax"],["95.6%","accuracy"],["0.760","Dice"]], g:[["usfm-heads.jpg","Heads and guidance path"]]},
+ {t:"Swin-Diffusion U-Net", s:"done", d:"The denoiser is a Swin-Transformer U-Net with windowed attention, patch merging and expanding. It takes 8 channels: the noisy target latent and the low-quality latent. Each block cross-attends to USFM features as key and value.", f:[["8 ch","input (4 + 4)"],["Swin","windowed attention"],["K, V","from USFM"]], g:[["swin-arch.jpg","Swin-Diffusion U-Net"]]},
+ {t:"Cross-attention check", s:"done", d:"Before long training, the same latent is denoised with real guidance and with a zeroed context. The outputs differ clearly, which confirms the guidance path is active, and the difference maps show where.", f:[["1.037","mean |Δ|"],["2.967","max |Δ|"],["5","organs tested"]], g:[["xattn.jpg","Guided vs. zeroed guidance and difference maps"]]},
+ {t:"Training loop", s:"prog", d:"Joint training of the U-Net and the USFM heads with a weighted sum of noise-prediction, organ and segmentation losses. Checkpoints save and resume, and training has been scaled past 100 epochs.", f:[["AdamW","optimizer"],["1e-4","learning rate"],["4","batch size"]], g:[["training-flow.jpg","Training loop"],["loss-curve.jpg","Loss over 100 epochs"]]},
+ {t:"Base diffusion inference", s:"done", d:"At inference the low-quality image goes through the VAE and USFM, a controlled amount of noise is added, the diffusion model removes it with organ guidance, and the VAE decoder returns the enhanced image.", f:[["LQ → HQ","direction"],["DDIM","sampler"],["Guided","by USFM"]], g:[["inference-flow.jpg","Inference flow"]]},
+ {t:"Pixel refiner", s:"prog", d:"The base output is a good global enhancement but can be slightly blurred, with missing high-frequency detail. A small U-Net takes the noisy input and the diffusion output and predicts a residual that restores speckle texture. Target: SSIM above 0.90.", f:[["U-Net","residual refiner"],["L1+SSIM","loss"],["> 0.90","SSIM target"]], g:[["pixelrefiner.jpg","Pixel refiner"]]}
+];
+
+/* ---- compare slider ---- */
+function buildCmp(el, a, b, la, lb, label){
+  el.innerHTML = '<img class="bottom-img" alt=""><img class="top-img" alt=""><span class="chip l"></span><span class="chip r"></span><div class="bar"></div><div class="knob" aria-hidden="true">◂ ▸</div><input type="range" min="0" max="100" step="0.5" value="50" aria-label="'+(label||'Comparison slider')+'">';
+  var imgs = el.querySelectorAll('img'), chips = el.querySelectorAll('.chip'), rng = el.querySelector('input');
+  function set(a,b,la,lb){ imgs[0].src=a; imgs[1].src=b; imgs[0].alt=la; imgs[1].alt=lb; chips[0].textContent=la; chips[1].textContent=lb; }
+  rng.addEventListener('input', function(){ el.style.setProperty('--pos', rng.value+'%'); });
+  set(a,b,la,lb);
+  el._set = set;
+  return el;
+}
+(function(){
+  var h = document.getElementById('heroCmp');
+  buildCmp(h, h.dataset.a, h.dataset.b, h.dataset.la, h.dataset.lb, 'Noisy input versus enhanced output');
+})();
+
+/* ---- demo ---- */
+var state = {organ:'liver', mode:'enh'};
+var demo = document.getElementById('demoCmp');
+buildCmp(demo, '', '', '', '', 'Drag to compare images');
+function fmt(n,d){ return n.toFixed(d); }
+function sign(n,d){ return (n>=0?'+':'−')+Math.abs(n).toFixed(d); }
+function renderDemo(){
+  var o = ORGANS[state.organ], m = MODES[state.mode], base = 'assets/'+state.organ+'-';
+  demo._set(base+m.a+'.jpg', base+m.b+'.jpg', m.la, m.lb);
+  document.getElementById('demoCap').textContent = m.cap;
+  var dp = o.psnr1-o.psnr0, ds = o.ssim1-o.ssim0;
+  document.getElementById('readout').innerHTML =
+    '<h3>'+o.name+'</h3><p style="color:var(--muted);font-size:.9rem">Scores against the high-quality ground truth for this image.</p>'+
+    '<div class="mrow"><dl class="m"><dt>PSNR, noisy input</dt><dd>'+fmt(o.psnr0,2)+' dB</dd><dt>PSNR, enhanced</dt><dd>'+fmt(o.psnr1,2)+' dB <span class="delta '+(dp>=0?'up':'down')+'">'+sign(dp,2)+'</span></dd></dl></div>'+
+    '<div class="mrow"><dl class="m"><dt>SSIM, noisy input</dt><dd>'+fmt(o.ssim0,3)+'</dd><dt>SSIM, enhanced</dt><dd>'+fmt(o.ssim1,3)+' <span class="delta '+(ds>=0?'up':'down')+'">'+sign(ds,3)+'</span></dd></dl></div>'+
+    '<p class="note">'+(ds<0?'On this organ the enhanced image has higher PSNR but lower SSIM than the noisy input. See the results section for context.':'Both PSNR and SSIM improve on this image.')+'</p>';
+  [].forEach.call(document.querySelectorAll('#organSeg button'), function(b){ b.setAttribute('aria-pressed', b.dataset.k===state.organ); });
+  [].forEach.call(document.querySelectorAll('#modeSeg button'), function(b){ b.setAttribute('aria-pressed', b.dataset.k===state.mode); });
+}
+function seg(id, obj, key, label){
+  var box = document.getElementById(id);
+  Object.keys(obj).forEach(function(k){
+    var b = document.createElement('button'); b.type='button'; b.dataset.k=k; b.textContent=label(obj[k]);
+    b.addEventListener('click', function(){ state[key]=k; renderDemo(); });
+    box.appendChild(b);
+  });
+}
+seg('organSeg', ORGANS, 'organ', function(o){return o.name;});
+seg('modeSeg', MODES, 'mode', function(m){return m.label;});
+renderDemo();
+
+/* ---- method tabs ---- */
+var tabsEl = document.getElementById('tabs'), panelEl = document.getElementById('panel');
+function showModule(i){
+  var m = MODULES[i];
+  [].forEach.call(tabsEl.children, function(t,j){ t.setAttribute('aria-selected', j===i); });
+  panelEl.innerHTML = '<span class="badge '+(m.s==='done'?'b-done':'b-prog')+'">'+(m.s==='done'?'Functional':'In progress')+'</span>'+
+    '<h3 style="margin-top:12px">Module '+(i+1)+': '+m.t+'</h3><p class="desc">'+m.d+'</p>'+
+    '<div class="facts">'+m.f.map(function(f){return '<div class="fact"><b>'+f[0]+'</b><span>'+f[1]+'</span></div>';}).join('')+'</div>'+
+    '<div class="figs">'+m.g.map(function(g){return '<figure><img src="assets/'+g[0]+'" alt="'+g[1]+'"><figcaption>'+g[1]+'</figcaption></figure>';}).join('')+'</div>';
+}
+MODULES.forEach(function(m,i){
+  var b = document.createElement('button'); b.className='tab'; b.type='button'; b.setAttribute('role','tab');
+  b.innerHTML = '<i>'+(i+1)+'</i><span>'+m.t+'</span>';
+  b.addEventListener('click', function(){ showModule(i); });
+  tabsEl.appendChild(b);
+});
+showModule(0);
+
+/* ---- result bars ---- */
+function bars(id, k0, k1, max, d){
+  var box = document.getElementById(id);
+  Object.keys(ORGANS).forEach(function(k){
+    var o = ORGANS[k], delta = o[k1]-o[k0];
+    var r = document.createElement('div'); r.className='bar-row';
+    r.innerHTML = '<span>'+o.name+'</span><div class="track" role="img" aria-label="'+o.name+': '+fmt(o[k0],d)+' to '+fmt(o[k1],d)+'"><div class="a" style="width:'+(o[k0]/max*100)+'%"></div><div class="b" style="width:'+(o[k1]/max*100)+'%"></div></div><span class="v">'+fmt(o[k0],d)+' → '+fmt(o[k1],d)+'</span>';
+    box.appendChild(r);
+  });
+}
+bars('psnrBars','psnr0','psnr1',30,2);
+bars('ssimBars','ssim0','ssim1',1,3);
+
+/* ---- videos ---- */
+(function(){
+  var box = document.getElementById('vids');
+  var list = VIDEOS.length ? VIDEOS : [
+    {title:"End-to-end demo", desc:"Noisy scan in, enhanced scan and organ label out.", url:""},
+    {title:"Architecture walkthrough", desc:"How USFM guidance steers the diffusion model.", url:""},
+    {title:"Training and results", desc:"Loss curves, metrics and per-organ outputs.", url:""}
+  ];
+  list.forEach(function(v){
+    var d = document.createElement('div'); d.className='vid';
+    var screen;
+    if(v.url && /\.(mp4|webm)$/i.test(v.url)){ screen = '<div class="screen"><video controls preload="metadata" src="'+v.url+'"></video></div>'; }
+    else if(v.url){ screen = '<a class="screen" href="'+v.url+'" target="_blank" rel="noopener" aria-label="Open '+v.title+'"><span class="play"></span></a>'; }
+    else { screen = '<div class="screen"><span class="play" style="opacity:.45"></span><span class="soon">Video coming soon</span></div>'; }
+    d.innerHTML = screen+'<div class="txt"><h3>'+v.title+'</h3><p>'+v.desc+'</p></div>';
+    box.appendChild(d);
+  });
+})();
+
+/* ---- theme toggle ---- */
+document.getElementById('theme').addEventListener('click', function(){
+  var r = document.documentElement, cur = r.getAttribute('data-theme');
+  var dark = cur ? cur==='dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
+  r.setAttribute('data-theme', dark ? 'light' : 'dark');
+});
+</script>
+
+</body></html>
