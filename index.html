@@ -178,9 +178,10 @@ td.num,th.num{text-align:right;font-family:var(--f-mono);font-variant-numeric:ta
 /* progress */
 .prog{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:28px;align-items:start}
 .meter{height:14px;background:var(--surface2);border-radius:99px;overflow:hidden;margin:12px 0 4px}
-.meter i{display:block;height:100%;width:90%;background:var(--accent);border-radius:99px}
+.meter i{display:block;height:100%;width:100%;background:var(--accent);border-radius:99px}
 .todo{list-style:none;padding:0;margin:0;display:grid;gap:10px}
 .todo li{display:flex;justify-content:space-between;gap:12px;padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+.todo em.d{color:var(--good)}
 .todo em{font:normal .72rem var(--f-mono);color:var(--warn);align-self:center;white-space:nowrap}
 
 /* docs */
@@ -279,6 +280,7 @@ footer img{height:44px;border-radius:4px;background:#fff}
           <a class="btn pri" href="#demo">Try the comparison slider</a>
           <a class="btn" href="https://github.com/Ultrasound-Image-Enhancement" target="_blank" rel="noopener">GitHub repository</a>
           <a class="btn" href="#docs">Documentation</a>
+          <a class="btn" href="assets/research-paper.pdf" target="_blank" rel="noopener">Research paper (PDF)</a>
         </div>
         <div class="meta">
           <span>Guide <b>Dr. Suchithra M</b></span>
@@ -286,15 +288,15 @@ footer img{height:44px;border-radius:4px;background:#fff}
         </div>
       </div>
       <div>
-        <div class="cmp" id="heroCmp" data-a="assets/liver-lq.jpg" data-b="assets/liver-enh.jpg" data-la="Noisy input" data-lb="Enhanced"></div>
-        <p class="cap">Liver, held-out validation image. Drag the slider to reveal the enhanced result.</p>
+        <div class="cmp" id="heroCmp" data-a="assets/liver-lq.jpg" data-b="assets/liver-ref.jpg" data-la="Noisy input" data-lb="Enhanced"></div>
+        <p class="cap">Liver, held-out image. Drag the slider to reveal the enhanced result.</p>
       </div>
     </div>
     <div class="statrow" aria-label="Headline numbers">
       <div class="stat"><b>5</b><span>organs: breast, thyroid, liver, kidney, carotid</span></div>
       <div class="stat"><b>840</b><span>paired low / high quality images</span></div>
-      <div class="stat"><b>+3.49 dB</b><span>average PSNR gain over the noisy input</span></div>
-      <div class="stat"><b>95.6%</b><span>organ classification accuracy (n = 160)</span></div>
+      <div class="stat"><b>+3.33 dB</b><span>average PSNR gain over the noisy input (held-out)</span></div>
+      <div class="stat"><b>95.9%</b><span>organ classification accuracy (held-out, n = 123)</span></div>
     </div>
   </div>
 </section>
@@ -373,7 +375,7 @@ footer img{height:44px;border-radius:4px;background:#fff}
     <div class="sec-head">
       <span class="eyebrow">Live comparison</span>
       <h2>Slide to see what the model changes.</h2>
-      <p class="lede">One held-out validation image per organ. Compare the noisy input with the enhanced output, the enhanced output with the ground truth, or the input with the anatomy map from the USFM segmentation head.</p>
+      <p class="lede">One held-out image per organ. Compare the noisy input with the final output, with and without the ROI gate, look at the base diffusion output on its own, or compare the final result with the ground truth.</p>
     </div>
     <div class="demo-grid">
       <div>
@@ -394,49 +396,63 @@ footer img{height:44px;border-radius:4px;background:#fff}
   <div class="wrap">
     <div class="sec-head">
       <span class="eyebrow">Results</span>
-      <h2>Clear gains in PSNR, mixed results in SSIM.</h2>
-      <p class="lede">Evaluation uses one validation sample per organ, scored against the high-quality ground truth. Classification and segmentation use the 160-image validation split.</p>
+      <h2>Consistent PSNR gains. SSIM depends on the ROI gate.</h2>
+      <p class="lede">Held-out split: 123 pairs (15% of each organ). Test partition: 210 separate pairs from the dataset's test set, scored with the saved checkpoints and no retraining. One training run, seed 42.</p>
     </div>
     <div class="tiles">
-      <div class="tile"><b>22.80 dB</b><span>Average PSNR (noisy input: 19.32 dB)</span><small>+3.49 dB</small></div>
-      <div class="tile"><b>0.683</b><span>Average SSIM (noisy input: 0.616)</span><small>+0.067</small></div>
-      <div class="tile"><b>95.6%</b><span>Organ classification accuracy</span></div>
-      <div class="tile"><b>0.760</b><span>Segmentation Dice vs. structural proxy mask</span></div>
+      <div class="tile"><b>22.10 dB</b><span>Held-out PSNR, refined (input: 18.77 dB)</span><small>+3.33 dB · 22.71 dB with ROI gate</small></div>
+      <div class="tile"><b>0.695</b><span>Held-out SSIM, refined (input: 0.632)</span><small>+0.063 · 0.756 with ROI gate</small></div>
+      <div class="tile"><b>22.15 dB</b><span>Test partition PSNR (input: 18.73 dB)</span><small>+3.42 dB · SSIM 0.643 → 0.700</small></div>
+      <div class="tile"><b>95.9%</b><span>Organ accuracy, held-out (test partition: 91.9%)</span></div>
     </div>
     <div class="res-grid">
       <div class="card">
         <h3>PSNR by organ</h3>
-        <p class="sub">Higher is better. Noisy input vs. enhanced output.</p>
-        <div class="legend"><span><i style="background:#8a7f84"></i>Noisy input</span><span><i style="background:var(--accent)"></i>Enhanced</span></div>
+        <p class="sub">Higher is better. Held-out images, noisy input vs. final output.</p>
+        <div class="legend"><span><i style="background:#8a7f84"></i>Noisy input</span><span><i style="background:var(--accent)"></i>Final (refined)</span></div>
         <div class="bars" id="psnrBars"></div>
       </div>
       <div class="card">
         <h3>SSIM by organ</h3>
-        <p class="sub">Higher is better. Noisy input vs. enhanced output.</p>
-        <div class="legend"><span><i style="background:#8a7f84"></i>Noisy input</span><span><i style="background:var(--accent)"></i>Enhanced</span></div>
+        <p class="sub">Higher is better. Held-out images, noisy input vs. final output.</p>
+        <div class="legend"><span><i style="background:#8a7f84"></i>Noisy input</span><span><i style="background:var(--accent)"></i>Final (refined)</span></div>
         <div class="bars" id="ssimBars"></div>
       </div>
       <div class="card">
-        <h3>Organ classification</h3>
-        <p class="sub">USFM classification head, validation split.</p>
-        <div class="tscroll"><table>
-          <thead><tr><th>Organ</th><th class="num">Accuracy</th><th class="num">Images</th></tr></thead>
-          <tbody>
-            <tr><td>Breast</td><td class="num">100.0%</td><td class="num">31</td></tr>
-            <tr><td>Thyroid</td><td class="num">100.0%</td><td class="num">43</td></tr>
-            <tr><td>Carotid</td><td class="num">94.9%</td><td class="num">39</td></tr>
-            <tr><td>Kidney</td><td class="num">89.5%</td><td class="num">19</td></tr>
-            <tr><td>Liver</td><td class="num">89.3%</td><td class="num">28</td></tr>
-            <tr><td><b>Overall</b></td><td class="num"><b>95.6%</b></td><td class="num"><b>160</b></td></tr>
-          </tbody></table></div>
+        <h3>Training curves</h3>
+        <p class="sub">Denoiser total and noise-prediction loss, auxiliary classification and ROI losses, and refiner L1 and (1 − SSIM) terms.</p>
+        <div class="photo"><img src="assets/loss-curve.jpg" alt="Training curves of the unified model"></div>
+      </div>
+      <div class="card" style="grid-column:1/-1">
+        <h3>Every pipeline stage, per organ</h3>
+        <p class="sub">LQ is the noisy input, Base is the diffusion output alone, Refined adds the pixel refiner, +Gate also keeps the input outside the imaging sector.</p>
+        <div class="seg" id="stageSeg"></div>
+        <div class="tscroll"><table id="stageTbl"></table></div>
+      </div>
+      <div style="grid-column:1/-1;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:16px">
+      <div class="card">
+        <h3>Does USFM guidance matter?</h3>
+        <p class="sub">Held-out images, trained pipeline run with real tokens, zeroed tokens, or tokens from a different organ.</p>
+        <div class="tscroll"><table><thead><tr><th rowspan="2">Organ</th><th class="num" colspan="3">PSNR (dB)</th><th class="num" colspan="3">SSIM</th></tr><tr><th class="num">True</th><th class="num">Zero</th><th class="num">Wrong</th><th class="num">True</th><th class="num">Zero</th><th class="num">Wrong</th></tr></thead><tbody><tr><td>Breast</td><td class="num">20.04</td><td class="num">19.59</td><td class="num">19.80</td><td class="num">.753</td><td class="num">.736</td><td class="num">.750</td></tr><tr><td>Carotid</td><td class="num">21.03</td><td class="num">19.84</td><td class="num">19.89</td><td class="num">.765</td><td class="num">.736</td><td class="num">.754</td></tr><tr><td>Kidney</td><td class="num">23.72</td><td class="num">21.60</td><td class="num">23.57</td><td class="num">.586</td><td class="num">.523</td><td class="num">.582</td></tr><tr><td>Liver</td><td class="num">23.87</td><td class="num">21.78</td><td class="num">22.28</td><td class="num">.592</td><td class="num">.529</td><td class="num">.543</td></tr><tr><td>Thyroid</td><td class="num">21.83</td><td class="num">20.58</td><td class="num">21.28</td><td class="num">.779</td><td class="num">.748</td><td class="num">.764</td></tr><tr><td><b>Average</b></td><td class="num"><b>22.10</b></td><td class="num"><b>20.68</b></td><td class="num"><b>21.37</b></td><td class="num"><b>.695</b></td><td class="num"><b>.654</b></td><td class="num"><b>.679</b></td></tr></tbody></table></div>
+        <p class="note">Removing the guidance costs about 1.4 dB PSNR.</p>
       </div>
       <div class="card">
-        <h3>Training convergence</h3>
-        <p class="sub">Total loss over 100 epochs falls from about 0.42 to about 0.21.</p>
-        <div class="photo"><img src="assets/loss-curve.jpg" alt="Training loss convergence curve over 100 epochs"></div>
+        <h3>Organ classification and ROI heads</h3>
+        <p class="sub">Accuracy of the organ head and Dice of the ROI head against pseudo-ROI masks.</p>
+        <div class="tscroll"><table>
+          <thead><tr><th>Organ</th><th class="num">Acc. held-out</th><th class="num">Acc. test</th><th class="num">Dice held-out</th><th class="num">Dice test</th></tr></thead>
+          <tbody>
+            <tr><td>Breast</td><td class="num">100.0%</td><td class="num">100.0%</td><td class="num">0.996</td><td class="num">0.949</td></tr>
+            <tr><td>Carotid</td><td class="num">97.1%</td><td class="num">91.2%</td><td class="num">0.965</td><td class="num">0.869</td></tr>
+            <tr><td>Kidney</td><td class="num">85.7%</td><td class="num">70.8%</td><td class="num">0.951</td><td class="num">0.680</td></tr>
+            <tr><td>Liver</td><td class="num">88.2%</td><td class="num">96.7%</td><td class="num">0.935</td><td class="num">0.650</td></tr>
+            <tr><td>Thyroid</td><td class="num">100.0%</td><td class="num">93.1%</td><td class="num">0.966</td><td class="num">0.836</td></tr>
+            <tr><td><b>Overall</b></td><td class="num"><b>95.9%</b></td><td class="num"><b>91.9%</b></td><td class="num">n/a</td><td class="num">n/a</td></tr>
+          </tbody></table></div>
       </div>
-    </div>
-    <div class="honest"><b>Reading these numbers.</b> PSNR improves for every organ. SSIM improves for carotid, liver and kidney, and drops for breast (−0.068) and thyroid (−0.058). The VAE that compresses images into latents limits the best achievable quality (about 29 dB PSNR and 0.75 SSIM on ground-truth images), which is why the pixel-space refiner is the next stage.</div>
+      </div>
+                      </div>
+    <div class="honest"><b>Reading these numbers.</b> PSNR improves for every organ on both splits. The refined output lowers SSIM for kidney (−0.092) and liver (−0.096) on the held-out set, and the ROI gate is what turns those into gains (+0.060 and +0.050). On the test partition the gate in turn lowers SSIM for carotid, breast and thyroid. The base diffusion output alone has lower SSIM than the input (0.523 vs. 0.632), and LPIPS shows no meaningful perceptual gain. Kidney classification drops to 70.8% on the test partition. Single run, single dataset, ImageNet-21k backbone: this is a research prototype, not a clinical tool.</div>
   </div>
 </section>
 
@@ -445,12 +461,12 @@ footer img{height:44px;border-radius:4px;background:#fff}
   <div class="wrap">
     <div class="sec-head">
       <span class="eyebrow">Project progress</span>
-      <h2>About 60% complete, with the full chain integrated.</h2>
+      <h2>100% complete, with the full chain integrated and tested.</h2>
     </div>
     <div class="prog">
       <div class="card">
-        <div style="display:flex;justify-content:space-between;font-size:.9rem"><b>Overall implementation</b><span style="font-family:var(--f-mono)">≈ 90%</span></div>
-        <div class="meter" role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" aria-label="Overall progress"><i></i></div>
+        <div style="display:flex;justify-content:space-between;font-size:.9rem"><b>Overall implementation</b><span style="font-family:var(--f-mono)">100%</span></div>
+        <div class="meter" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" aria-label="Overall progress"><i></i></div>
         <div class="tscroll" style="margin-top:14px"><table>
           <thead><tr><th>Module</th><th>Current state</th><th>Status</th></tr></thead>
           <tbody>
@@ -458,20 +474,21 @@ footer img{height:44px;border-radius:4px;background:#fff}
             <tr><td>VAE compression</td><td>Frozen pretrained VAE, round-trip PSNR/SSIM verified</td><td><span class="badge b-done">Functional</span></td></tr>
             <tr><td>USFM backbone</td><td>ViT-base with classification and segmentation heads</td><td><span class="badge b-done">Functional</span></td></tr>
             <tr><td>Swin-Diffusion U-Net</td><td>Cross-attention guided, 8-channel input, ablation-verified</td><td><span class="badge b-done">Functional</span></td></tr>
-            <tr><td>Training</td><td>Composite loss, AdamW, resumable checkpoints, 100+ epochs</td><td><span class="badge b-prog">In progress</span></td></tr>
-            <tr><td>Pixel refiner</td><td>U-Net residual refiner targeting SSIM &gt; 0.90</td><td><span class="badge b-prog">In progress</span></td></tr>
+            <tr><td>Training</td><td>Composite loss, AdamW, resumable checkpoints, 100 epochs</td><td><span class="badge b-done">Functional</span></td></tr>
+            <tr><td>Pixel refiner</td><td>Residual U-Net trained on cached sampler outputs, plus optional ROI gate</td><td><span class="badge b-done">Functional</span></td></tr>
+            <tr><td>Evaluation</td><td>Held-out (123) and test partition (210): PSNR, SSIM, LPIPS, entropy</td><td><span class="badge b-done">Functional</span></td></tr>
             <tr><td>Integration</td><td>Dataset → VAE → USFM → Diffusion → Refiner → Metrics</td><td><span class="badge b-done">Integrated</span></td></tr>
           </tbody></table></div>
       </div>
       <div>
-        <h3 style="margin-bottom:14px">Plan for the coming weeks</h3>
+        <h3 style="margin-bottom:14px">Plan and status</h3>
         <ul class="todo">
-          <li>Improve organ-wise evaluation metrics <em>ONGOING</em></li>
-          <li>Test the complete pipeline <em></em></li>
-          <li>Implement binary-class disease prediction <em></em></li>
-          <li>Complete coursework <em>ONGOING</em></li>
-          <li>Prepare research paper draft <em>ONGOING</em></li>
-          <li>Develop the web application <em></em></li>
+          <li>Improve scores <em>ONGOING</em></li>
+          <li>Test the complete pipeline <em class="d">DONE</em></li>
+          <li>Implement binary-class disease prediction <em class="d">DONE</em></li>
+          <li>Complete coursework <em class="d">DONE</em></li>
+          <li>Prepare research paper draft <em class="d">DONE</em></li>
+          <li>Develop the web application <em class="d">DONE</em></li>
         </ul>
       </div>
     </div>
@@ -487,7 +504,7 @@ footer img{height:44px;border-radius:4px;background:#fff}
     </div>
     <div class="docs">
       <details class="doc" open><summary>Dataset and preprocessing</summary><div class="in">
-        <p>840 paired low-quality / high-quality images across breast, thyroid, liver, kidney and carotid, from the USenhance2023 Grand Challenge (aligned version on Hugging Face).</p>
+        <p>840 paired low-quality / high-quality images across breast, thyroid, liver, kidney and carotid, from the USenhance2023 Grand Challenge (aligned version on Hugging Face). Split per organ: 717 train, 123 held-out. A separate 210-pair test partition is used only for final scoring.</p>
         <ul><li>Resize to 256 × 256</li><li>Normalise intensities from [0, 1] to [−1, 1]</li><li>Training only: matched horizontal flip and rotation ±15° applied to both images</li></ul>
         <img src="assets/pre-flow.jpg" alt="Preprocessing flow" style="max-width:260px">
       </div></details>
@@ -495,12 +512,16 @@ footer img{height:44px;border-radius:4px;background:#fff}
         <table><tbody>
           <tr><td>Optimizer</td><td class="num">AdamW</td></tr>
           <tr><td>Learning rate</td><td class="num">1e-4</td></tr>
-          <tr><td>Batch size</td><td class="num">4</td></tr>
-          <tr><td>Epochs</td><td class="num">100+</td></tr>
+          <tr><td>Batch size</td><td class="num">16</td></tr>
+          <tr><td>Epochs</td><td class="num">100 (denoiser), 100 (refiner)</td></tr>
+          <tr><td>Refiner learning rate</td><td class="num">2e-4</td></tr>
+          <tr><td>Sampler</td><td class="num">DDIM, start index 35, 15 steps, η = 0</td></tr>
+          <tr><td>Seed / split</td><td class="num">42 / 85% – 15%</td></tr>
+          <tr><td>Training time</td><td class="num">≈ 2.5 h, one cloud GPU</td></tr>
           <tr><td>λ enhance / cls / seg</td><td class="num">1.0 / 0.01 / 0.05</td></tr>
           <tr><td>Latent size</td><td class="num">4 × 32 × 32</td></tr>
           <tr><td>Frozen ViT parameters</td><td class="num">85.8 M</td></tr>
-          <tr><td>Trainable head parameters</td><td class="num">3.84 M</td></tr>
+          <tr><td>Trainable: denoiser / heads / refiner</td><td class="num">8.64 M / 3.81 M / 1.93 M</td></tr>
         </tbody></table>
         <p>Working in latent space is about 8× cheaper than pixel-space diffusion, which suits limited GPU resources.</p>
       </div></details>
@@ -510,41 +531,42 @@ footer img{height:44px;border-radius:4px;background:#fff}
       <details class="doc"><summary>VAE round-trip check</summary><div class="in">
         <p>Encode then decode each organ to measure how much the latent space preserves before any diffusion training.</p>
         <table><thead><tr><th>Organ</th><th class="num">PSNR (dB)</th><th class="num">SSIM</th></tr></thead><tbody>
-          <tr><td>Liver</td><td class="num">32.07</td><td class="num">0.877</td></tr>
-          <tr><td>Thyroid</td><td class="num">29.00</td><td class="num">0.734</td></tr>
-          <tr><td>Carotid</td><td class="num">28.52</td><td class="num">0.776</td></tr>
-          <tr><td>Kidney</td><td class="num">28.22</td><td class="num">0.782</td></tr>
-          <tr><td>Breast</td><td class="num">26.49</td><td class="num">0.629</td></tr>
+          <tr><td>Liver</td><td class="num">28.97</td><td class="num">0.790</td></tr>
+          <tr><td>Kidney</td><td class="num">28.92</td><td class="num">0.790</td></tr>
+          <tr><td>Thyroid</td><td class="num">28.71</td><td class="num">0.732</td></tr>
+          <tr><td>Carotid</td><td class="num">28.64</td><td class="num">0.740</td></tr>
+          <tr><td>Breast</td><td class="num">27.19</td><td class="num">0.628</td></tr>
         </tbody></table>
       </div></details>
       <details class="doc"><summary>Cross-attention ablation</summary><div class="in">
         <p>The same noisy latent is denoised once with real USFM guidance and once with a zeroed context vector. A non-zero output difference confirms the guidance is wired into the network.</p>
         <ul><li>Mean absolute difference: <code>1.037</code></li><li>Max absolute difference: <code>2.967</code></li></ul>
       </div></details>
-      <details class="doc"><summary>Inference experiments</summary><div class="in">
-        <p>Findings from a one-batch sweep on the validation set (no retraining). Iterative 50-step sampling from pure noise drifted from the input, while a single bounded correction step scored higher.</p>
-        <table><thead><tr><th>Setting</th><th class="num">PSNR</th><th class="num">SSIM</th></tr></thead><tbody>
-          <tr><td>Noisy input</td><td class="num">18.14</td><td class="num">0.599</td></tr>
-          <tr><td>Multi-step DDIM, strength 0.2</td><td class="num">17.92</td><td class="num">0.373</td></tr>
-          <tr><td>One-shot, t = 400</td><td class="num">21.55</td><td class="num">0.617</td></tr>
-          <tr><td>One-shot + detail blend α = 0.5</td><td class="num">21.69</td><td class="num">0.659</td></tr>
-        </tbody></table>
+      <details class="doc"><summary>Sampler, refiner and ROI gate</summary><div class="in">
+        <ul><li>DDIM from the noised low-quality latent: step 35 of a 50-step schedule, 15 steps, η = 0, no latent clipping</li><li>Refiner trained on cached outputs of that same sampler (2 noise draws per image), loss L1 + 5·(1 − SSIM)</li><li>ROI gate keeps the input outside the imaging sector, which SSIM penalises heavily for kidney and liver</li></ul>
+        <p>Stage-wise numbers for every organ are in the Results section.</p>
+      </div></details>
+      <details class="doc"><summary>Research paper</summary><div class="in">
+        <p>Final draft: Multi-Organ Anatomy-Preserving Speckle Reduction and Texture Enhancement in Ultrasound Images Using Semantic-Guided Latent Diffusion with Pixel Refinement.</p>
+        <p><a class="btn pri" href="assets/research-paper.pdf" target="_blank" rel="noopener">Open PDF</a> <a class="btn" href="assets/research-paper.docx" download>Download DOCX</a></p>
       </div></details>
       <details class="doc"><summary>Notebook map</summary><div class="in">
-        <ul><li>Phase 0: environment and Drive setup</li><li>Phase 1: paired dataset pipeline</li><li>Phase 2: VAE round-trip test</li><li>Phase 3: USFM backbone with two heads</li><li>Phase 4: Swin-Diffusion U-Net</li><li>Phase 5: cross-attention check</li><li>Phase 6: synchronized augmentation check</li><li>Phase 7: joint training, resumable</li><li>Phase 8: bounded diffusion sampling</li><li>Phase 10: evaluation, USFM validation, quality metrics</li></ul>
+        <ul><li>Phase 0: environment and Drive setup</li><li>Phase 1: paired dataset pipeline</li><li>Phase 2: VAE round-trip test</li><li>Phase 3: USFM backbone with two heads</li><li>Phase 4: Swin-Diffusion U-Net</li><li>Phase 5: cross-attention check</li><li>Phase 6: synchronized augmentation check</li><li>Phase 7: joint training, resumable</li><li>Module 7 to 9: training, base inference, pixel refiner</li><li>Module 10: held-out and test-partition evaluation</li><li>Multi-task heads, guidance ablation, inference API</li></ul>
         <a href="https://colab.research.google.com/drive/1wgYviXHNSkZ6mn2ddFmc1ElN37h7N3-v?usp=sharing" target="_blank" rel="noopener">Open the multi-organ notebook ↗</a>
       </div></details>
     </div>
     <h3 style="margin-top:44px">References</h3>
     <ol class="refs">
-      <li><a href="https://www.researchgate.net/publication/330077657_A_Study_on_Preprocessing_Techniques_for_Ultrasound_Images_of_Carotid_Artery" target="_blank" rel="noopener">A Study on Preprocessing Techniques for Ultrasound Images of Carotid Artery</a></li>
-      <li><a href="https://ieeexplore.ieee.org/document/10879338" target="_blank" rel="noopener">IEEE Xplore document 10879338</a></li>
-      <li><a href="https://pubs.aip.org/aip/acp/article-abstract/3214/1/020043/3318706/Enhanced-U-net-architecture-for-ultrasound-image?redirectedFrom=fulltext" target="_blank" rel="noopener">Enhanced U-net Architecture for Ultrasound Image Enhancement</a></li>
-      <li><a href="https://huggingface.co/datasets/Jason0411202/USenhance2023_Aligned" target="_blank" rel="noopener">USenhance2023 Aligned Dataset, Hugging Face</a></li>
-      <li><a href="https://ultrasoundenhance2023.grand-challenge.org/" target="_blank" rel="noopener">UltrasoundEnhance2023 Grand Challenge</a></li>
-      <li><a href="https://arxiv.org/abs/2105.05537" target="_blank" rel="noopener">Latent Diffusion Models (arXiv 2105.05537)</a></li>
-      <li><a href="https://soheilfallah.com/articles/latent-diffusion-models-medical-imaging-guide" target="_blank" rel="noopener">Latent Diffusion Models for Medical Imaging: A Guide</a></li>
+      <li><a href="https://link.springer.com/article/10.1007/s44443-025-00285-y" target="_blank" rel="noopener">A novel CycleGAN network applicable for enhancing low-quality ultrasound images of multiple organs. J. King Saud Univ. Comput. Inf. Sci., 2025</a></li>
+      <li><a href="https://www.sciencedirect.com/science/article/pii/S0169260725003736" target="_blank" rel="noopener">ScienceDirect article S0169260725003736</a></li>
+      <li><a href="https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=10879338" target="_blank" rel="noopener">IEEE Xplore document 10879338</a></li>
+      <li><a href="https://www.sciencedirect.com/science/article/pii/S1361841524001270" target="_blank" rel="noopener">USFM: A universal ultrasound foundation model generalized to tasks and organs towards label efficient image analysis. Med. Image Anal., 2024</a></li>
+      <li><a href="https://www.frontiersin.org/journals/physiology/articles/10.3389/fphys.2022.961571/full" target="_blank" rel="noopener">Medical ultrasound image speckle reduction and resolution enhancement using texture compensated multi-resolution convolution neural network. Front. Physiol., 2022</a></li>
+      <li><a href="https://www.sciencedirect.com/science/article/pii/S0010482522010939" target="_blank" rel="noopener">US-Net: A lightweight network for simultaneous speckle suppression and texture enhancement in ultrasound images. Comput. Biol. Med., 2023</a></li>
+      <li><a href="https://www.sciencedirect.com/science/article/pii/S2667099222000159" target="_blank" rel="noopener">ScienceDirect article S2667099222000159</a></li>
+      <li><a href="https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=8417930" target="_blank" rel="noopener">IEEE Xplore document 8417930</a></li>
     </ol>
+    <p class="note" style="margin-top:20px">Datasets and resources: <a href="https://huggingface.co/datasets/Jason0411202/USenhance2023_Aligned" target="_blank" rel="noopener">USenhance2023 Aligned (Hugging Face)</a> · <a href="https://ultrasoundenhance2023.grand-challenge.org/" target="_blank" rel="noopener">UltrasoundEnhance2023 Grand Challenge</a> · <a href="https://arxiv.org/abs/2105.05537" target="_blank" rel="noopener">Latent Diffusion Models (arXiv)</a></p>
   </div>
 </section>
 
@@ -585,8 +607,9 @@ footer img{height:44px;border-radius:4px;background:#fff}
       <h2>Repository and notebooks.</h2>
     </div>
     <div class="links">
+      <a class="link" href="assets/research-paper.pdf" target="_blank" rel="noopener"><b>Research paper</b><span>Final IEEE-format draft (PDF)</span></a>
       <a class="link" href="https://github.com/Ultrasound-Image-Enhancement" target="_blank" rel="noopener"><b>GitHub repository</b><span>Source code for the full pipeline</span></a>
-      <a class="link" href="https://colab.research.google.com/drive/1wgYviXHNSkZ6mn2ddFmc1ElN37h7N3-v?usp=sharing" target="_blank" rel="noopener"><b>Colab: multi-organ</b><span>Five-organ training and evaluation</span></a>
+      <a class="link" href="https://colab.research.google.com/drive/1wgYviXHNSkZ6mn2ddFmc1ElN37h7N3-v?usp=sharing" target="_blank" rel="noopener"><b>Colab: multi-organ</b><span>Five-organ training, held-out and test evaluation</span></a>
       <a class="link" href="https://colab.research.google.com/drive/1l4eZHDSOkkwDkPtzDnq8gImNV2n_X3YB?usp=sharing" target="_blank" rel="noopener"><b>Colab: single organ</b><span>Breast-only baseline notebook</span></a>
       <a class="link" href="https://drive.google.com/drive/folders/1i-L-WyP8DlPmHRi3VBlqJaaNGFGAZYKl?usp=sharing" target="_blank" rel="noopener"><b>Architecture diagrams</b><span>High-resolution figures on Drive</span></a>
     </div>
@@ -607,28 +630,53 @@ var VIDEOS = [
   /* { title:"End-to-end demo", desc:"Noisy scan in, enhanced scan and organ label out.", url:"assets/demo.mp4" }, */
 ];
 
-var ORGANS = {
-  breast:  {name:"Breast",  psnr0:15.19, psnr1:21.21, ssim0:0.6165, ssim1:0.5484},
-  carotid: {name:"Carotid", psnr0:21.84, psnr1:23.00, ssim0:0.4901, ssim1:0.6851},
-  liver:   {name:"Liver",   psnr0:20.20, psnr1:24.90, ssim0:0.6422, ssim1:0.7671},
-  thyroid: {name:"Thyroid", psnr0:20.20, psnr1:21.59, ssim0:0.7047, ssim1:0.6465},
-  kidney:  {name:"Kidney",  psnr0:19.15, psnr1:23.33, ssim0:0.6283, ssim1:0.7669}
+var ORGANS = { /* held-out means, input vs. refined output */
+  breast:  {name:"Breast",  psnr0:17.27, psnr1:20.04, ssim0:0.6452, ssim1:0.7525},
+  carotid: {name:"Carotid", psnr0:16.87, psnr1:21.03, ssim0:0.5121, ssim1:0.7646},
+  liver:   {name:"Liver",   psnr0:21.78, psnr1:23.87, ssim0:0.6876, ssim1:0.5920},
+  thyroid: {name:"Thyroid", psnr0:17.16, psnr1:21.83, ssim0:0.6395, ssim1:0.7794},
+  kidney:  {name:"Kidney",  psnr0:20.77, psnr1:23.72, ssim0:0.6773, ssim1:0.5859}
 };
+var IMGS = { /* per-image [PSNR, SSIM] for the images in the slider */
+  breast:  {lq:[20.3,.714], base:[19.7,.459], ref:[21.1,.757], gate:[21.1,.756]},
+  carotid: {lq:[15.7,.474], base:[15.6,.378], ref:[20.6,.782], gate:[20.6,.782]},
+  liver:   {lq:[21.2,.664], base:[22.5,.574], ref:[24.0,.612], gate:[25.7,.711]},
+  thyroid: {lq:[18.7,.702], base:[19.6,.556], ref:[21.4,.739], gate:[21.7,.759]},
+  kidney:  {lq:[19.1,.690], base:[19.8,.590], ref:[23.3,.634], gate:[24.2,.756]}
+};
+var SNAME = {lq:"Noisy input", base:"Base diffusion", ref:"Final output", gate:"Final + ROI gate", hq:"Ground truth"};
 var MODES = {
-  enh:  {label:"Input ↔ Enhanced", a:"lq",  b:"enh",  la:"Noisy input", lb:"Enhanced", cap:"Drag to reveal the enhanced image."},
-  gt:   {label:"Enhanced ↔ Ground truth", a:"enh", b:"hq", la:"Enhanced", lb:"Ground truth", cap:"Drag to compare the output with the high-quality target."},
-  mask: {label:"Input ↔ Anatomy map", a:"lq", b:"mask", la:"Noisy input", lb:"USFM mask", cap:"Drag to reveal the anatomy map from the USFM segmentation head."}
+  ref:  {label:"Input ↔ Final", a:"lq", b:"ref", cap:"Drag to reveal the final enhanced output."},
+  gate: {label:"Input ↔ Final + ROI gate", a:"lq", b:"gate", cap:"Drag to reveal the output with the ROI gate."},
+  base: {label:"Input ↔ Base diffusion", a:"lq", b:"base", cap:"The base diffusion output alone, before the pixel refiner."},
+  gt:   {label:"Final + gate ↔ Ground truth", a:"gate", b:"hq", cap:"Drag to compare the output with the high-quality target."}
+};
+var STAGES = {
+  held:{label:"Held-out (123 pairs)", rows:[
+    ["Breast",24,[17.27,16.86,20.04,20.03],[.6452,.4316,.7525,.7522],[.2730,.3201,.3599,.3607]],
+    ["Carotid",34,[16.87,16.75,21.03,21.00],[.5121,.3988,.7646,.7644],[.3295,.3443,.2785,.2948]],
+    ["Kidney",14,[20.77,21.70,23.72,25.20],[.6773,.6447,.5859,.7377],[.2397,.1758,.2484,.2133]],
+    ["Liver",17,[21.78,22.66,23.87,25.43],[.6876,.6475,.5920,.7371],[.2467,.1819,.2575,.2191]],
+    ["Thyroid",34,[17.16,17.62,21.83,21.91],[.6395,.4925,.7794,.7904],[.2719,.2823,.2396,.2357]],
+    ["Average",123,[18.77,19.12,22.10,22.71],[.6323,.5230,.6949,.7564],[.2722,.2609,.2768,.2647]]]},
+  test:{label:"Test partition (210 pairs)", rows:[
+    ["Breast",41,[16.29,15.85,20.53,20.29],[.6355,.4253,.7663,.7583],[.2601,.3246,.3446,.3521]],
+    ["Carotid",57,[16.74,16.58,21.03,21.00],[.5433,.4249,.7897,.7348],[.3119,.3328,.2680,.2896]],
+    ["Kidney",24,[20.73,21.61,23.48,24.59],[.6886,.6501,.5839,.7374],[.2410,.1732,.2448,.2189]],
+    ["Liver",30,[21.93,22.49,23.42,25.02],[.6912,.6615,.5762,.7304],[.2352,.1756,.2540,.2213]],
+    ["Thyroid",58,[17.97,18.30,22.29,22.30],[.6569,.5055,.7819,.7728],[.2434,.2700,.2250,.2180]],
+    ["Average",210,[18.73,18.96,22.15,22.64],[.6431,.5334,.6996,.7468],[.2583,.2552,.2673,.2600]]]}
 };
 var MODULES = [
  {t:"Preprocessing", s:"done", d:"Paired low-quality and high-quality images are loaded together, resized to 256 × 256 and normalised to [−1, 1]. During training the same random flip and ±15° rotation is applied to both images so they stay aligned.", f:[["256×256","image size"],["[−1, 1]","intensity range"],["±15°","synced rotation"]], g:[["pre-flow.jpg","Preprocessing flow"],["pre-samples.jpg","Input / target pairs per organ"]]},
  {t:"VAE latent space", s:"done", d:"A frozen pretrained VAE (sd-vae-ft-mse) compresses each image into a 4 × 32 × 32 latent, an 8× spatial reduction. A round-trip check measures how much structure survives before diffusion training starts.", f:[["4×32×32","latent"],["8×","spatial compression"],["Frozen","weights"]], g:[["vae-flow.jpg","VAE compression pipeline"],["vae-roundtrip.jpg","Round-trip reconstruction"]]},
  {t:"USFM foundation model", s:"done", d:"A Vision Transformer in the style of the Universal Ultrasound Foundation Model learns general ultrasound understanding by reconstructing hidden patches. Its dense patch embeddings carry the organ and structure context used later for guidance.", f:[["ViT-B/16","backbone"],["768-d","patch embeddings"],["85.8 M","frozen params"]], g:[["usfm-pretrain.jpg","Masked-patch pretraining idea"],["usfm-arch.jpg","Backbone and heads"]]},
- {t:"Classification and segmentation", s:"done", d:"Two light heads sit on the USFM embeddings. One answers which organ this is, the other answers where the structures are. Both outputs, plus the embeddings, steer the diffusion model through cross-attention.", f:[["5-way","organ softmax"],["95.6%","accuracy"],["0.760","Dice"]], g:[["usfm-heads.jpg","Heads and guidance path"]]},
+ {t:"Classification and segmentation", s:"done", d:"Two light heads sit on the USFM embeddings. One answers which organ this is, the other answers where the structures are. Both outputs, plus the embeddings, steer the diffusion model through cross-attention.", f:[["5-way","organ softmax"],["95.9%","held-out accuracy"],["0.94–1.00","ROI Dice by organ"]], g:[["usfm-heads.jpg","Heads and guidance path"]]},
  {t:"Swin-Diffusion U-Net", s:"done", d:"The denoiser is a Swin-Transformer U-Net with windowed attention, patch merging and expanding. It takes 8 channels: the noisy target latent and the low-quality latent. Each block cross-attends to USFM features as key and value.", f:[["8 ch","input (4 + 4)"],["Swin","windowed attention"],["K, V","from USFM"]], g:[["swin-arch.jpg","Swin-Diffusion U-Net"]]},
  {t:"Cross-attention check", s:"done", d:"Before long training, the same latent is denoised with real guidance and with a zeroed context. The outputs differ clearly, which confirms the guidance path is active, and the difference maps show where.", f:[["1.037","mean |Δ|"],["2.967","max |Δ|"],["5","organs tested"]], g:[["xattn.jpg","Guided vs. zeroed guidance and difference maps"]]},
- {t:"Training loop", s:"prog", d:"Joint training of the U-Net and the USFM heads with a weighted sum of noise-prediction, organ and segmentation losses. Checkpoints save and resume, and training has been scaled past 100 epochs.", f:[["AdamW","optimizer"],["1e-4","learning rate"],["4","batch size"]], g:[["training-flow.jpg","Training loop"],["loss-curve.jpg","Loss over 100 epochs"]]},
+ {t:"Training loop", s:"done", d:"Joint training of the U-Net and the USFM heads with a weighted sum of noise-prediction, organ and segmentation losses, for 100 epochs. Checkpoints save and resume. About 2.5 hours in total on one cloud GPU.", f:[["AdamW","optimizer"],["1e-4","learning rate"],["16","batch size"]], g:[["training-flow.jpg","Training loop"],["loss-curve.jpg","Loss over 100 epochs"]]},
  {t:"Base diffusion inference", s:"done", d:"At inference the low-quality image goes through the VAE and USFM, a controlled amount of noise is added, the diffusion model removes it with organ guidance, and the VAE decoder returns the enhanced image.", f:[["LQ → HQ","direction"],["DDIM","sampler"],["Guided","by USFM"]], g:[["inference-flow.jpg","Inference flow"]]},
- {t:"Pixel refiner", s:"prog", d:"The base output is a good global enhancement but can be slightly blurred, with missing high-frequency detail. A small U-Net takes the noisy input and the diffusion output and predicts a residual that restores speckle texture. Target: SSIM above 0.90.", f:[["U-Net","residual refiner"],["L1+SSIM","loss"],["> 0.90","SSIM target"]], g:[["pixelrefiner.jpg","Pixel refiner"]]}
+ {t:"Pixel refiner and ROI gate", s:"done", d:"The base diffusion output has lower SSIM than the input, so a small residual U-Net restores texture. It is trained on cached outputs of the real sampler, so training matches inference. An optional ROI gate then keeps the input outside the imaging sector.", f:[["1.93 M","refiner params"],["L1 + 5(1−SSIM)","loss"],["ROI gate","optional stage"]], g:[["pixelrefiner.jpg","Pixel refiner"]]}
 ];
 
 /* ---- compare slider ---- */
@@ -647,21 +695,27 @@ function buildCmp(el, a, b, la, lb, label){
 })();
 
 /* ---- demo ---- */
-var state = {organ:'liver', mode:'enh'};
+var state = {organ:'liver', mode:'ref'};
 var demo = document.getElementById('demoCmp');
 buildCmp(demo, '', '', '', '', 'Drag to compare images');
 function fmt(n,d){ return n.toFixed(d); }
 function sign(n,d){ return (n>=0?'+':'−')+Math.abs(n).toFixed(d); }
 function renderDemo(){
-  var o = ORGANS[state.organ], m = MODES[state.mode], base = 'assets/'+state.organ+'-';
-  demo._set(base+m.a+'.jpg', base+m.b+'.jpg', m.la, m.lb);
+  var o = ORGANS[state.organ], m = MODES[state.mode], base = 'assets/'+state.organ+'-', im = IMGS[state.organ];
+  demo._set(base+m.a+'.jpg', base+m.b+'.jpg', SNAME[m.a], SNAME[m.b]);
   document.getElementById('demoCap').textContent = m.cap;
-  var dp = o.psnr1-o.psnr0, ds = o.ssim1-o.ssim0;
-  document.getElementById('readout').innerHTML =
-    '<h3>'+o.name+'</h3><p style="color:var(--muted);font-size:.9rem">Scores against the high-quality ground truth for this image.</p>'+
-    '<div class="mrow"><dl class="m"><dt>PSNR, noisy input</dt><dd>'+fmt(o.psnr0,2)+' dB</dd><dt>PSNR, enhanced</dt><dd>'+fmt(o.psnr1,2)+' dB <span class="delta '+(dp>=0?'up':'down')+'">'+sign(dp,2)+'</span></dd></dl></div>'+
-    '<div class="mrow"><dl class="m"><dt>SSIM, noisy input</dt><dd>'+fmt(o.ssim0,3)+'</dd><dt>SSIM, enhanced</dt><dd>'+fmt(o.ssim1,3)+' <span class="delta '+(ds>=0?'up':'down')+'">'+sign(ds,3)+'</span></dd></dl></div>'+
-    '<p class="note">'+(ds<0?'On this organ the enhanced image has higher PSNR but lower SSIM than the noisy input. See the results section for context.':'Both PSNR and SSIM improve on this image.')+'</p>';
+  var html = '<h3>'+o.name+'</h3><p style="color:var(--muted);font-size:.9rem">Scores against the high-quality ground truth for this image.</p>';
+  var worse = false;
+  if(m.b==='hq'){
+    html += '<div class="mrow"><dl class="m"><dt>PSNR, '+SNAME[m.a]+'</dt><dd>'+fmt(im[m.a][0],1)+' dB</dd><dt>SSIM, '+SNAME[m.a]+'</dt><dd>'+fmt(im[m.a][1],3)+'</dd></dl></div><p class="note">The ground truth is the reference, so it has no score of its own.</p>';
+  } else {
+    var a = im[m.a], b = im[m.b], dp = b[0]-a[0], ds = b[1]-a[1]; worse = ds<0;
+    html += '<div class="mrow"><dl class="m"><dt>PSNR, '+SNAME[m.a]+'</dt><dd>'+fmt(a[0],1)+' dB</dd><dt>PSNR, '+SNAME[m.b]+'</dt><dd>'+fmt(b[0],1)+' dB <span class="delta '+(dp>=0?'up':'down')+'">'+sign(dp,1)+'</span></dd></dl></div>'+
+      '<div class="mrow"><dl class="m"><dt>SSIM, '+SNAME[m.a]+'</dt><dd>'+fmt(a[1],3)+'</dd><dt>SSIM, '+SNAME[m.b]+'</dt><dd>'+fmt(b[1],3)+' <span class="delta '+(ds>=0?'up':'down')+'">'+sign(ds,3)+'</span></dd></dl></div>'+
+      '<p class="note">'+(worse?'SSIM is lower than the input on this image. See the notes under Results.':'PSNR and SSIM both improve on this image.')+'</p>';
+  }
+  html += '<p class="note">Organ mean over the held-out set: PSNR '+fmt(o.psnr0,2)+' → '+fmt(o.psnr1,2)+' dB, SSIM '+fmt(o.ssim0,3)+' → '+fmt(o.ssim1,3)+' (refined).</p>';
+  document.getElementById('readout').innerHTML = html;
   [].forEach.call(document.querySelectorAll('#organSeg button'), function(b){ b.setAttribute('aria-pressed', b.dataset.k===state.organ); });
   [].forEach.call(document.querySelectorAll('#modeSeg button'), function(b){ b.setAttribute('aria-pressed', b.dataset.k===state.mode); });
 }
@@ -675,6 +729,28 @@ function seg(id, obj, key, label){
 }
 seg('organSeg', ORGANS, 'organ', function(o){return o.name;});
 seg('modeSeg', MODES, 'mode', function(m){return m.label;});
+
+/* ---- stage table ---- */
+var stageKey='held';
+function renderStage(){
+  var d=STAGES[stageKey], h='<thead><tr><th rowspan="2">Organ</th><th rowspan="2" class="num">n</th><th class="num" colspan="4">PSNR (dB)</th><th class="num" colspan="4">SSIM</th><th class="num" colspan="4">LPIPS (lower is better)</th></tr><tr>';
+  for(var g=0;g<3;g++) h+='<th class="num">LQ</th><th class="num">Base</th><th class="num">Refined</th><th class="num">+Gate</th>';
+  h+='</tr></thead><tbody>';
+  d.rows.forEach(function(r){
+    var avg=r[0]==='Average', t=avg?'<b>':'', e=avg?'</b>':'';
+    h+='<tr><td>'+t+r[0]+e+'</td><td class="num">'+r[1]+'</td>';
+    [[2,2],[3,4],[4,4]].forEach(function(p){ r[p[0]].forEach(function(v){ h+='<td class="num">'+t+v.toFixed(p[1])+e+'</td>'; }); });
+    h+='</tr>';
+  });
+  document.getElementById('stageTbl').innerHTML=h+'</tbody>';
+  [].forEach.call(document.querySelectorAll('#stageSeg button'), function(b){ b.setAttribute('aria-pressed', b.dataset.k===stageKey); });
+}
+Object.keys(STAGES).forEach(function(k){
+  var b=document.createElement('button'); b.type='button'; b.dataset.k=k; b.textContent=STAGES[k].label;
+  b.addEventListener('click', function(){ stageKey=k; renderStage(); });
+  document.getElementById('stageSeg').appendChild(b);
+});
+renderStage();
 renderDemo();
 
 /* ---- method tabs ---- */
