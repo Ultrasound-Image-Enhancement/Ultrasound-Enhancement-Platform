@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Multi-Organ Ultrasound Enhancement</title>
+<title>Multi-Organ Anatomy-Preserving Speckle Reduction and Texture Enhancement in Ultrasound Images Using Semantic-Guided Latent Diffusion with Pixel Refinement</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
@@ -204,6 +204,7 @@ td.num,th.num{text-align:right;font-family:var(--f-mono);font-variant-numeric:ta
 .vids{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px}
 .vid{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden}
 .vid .screen{aspect-ratio:16/9;background:var(--scan);display:grid;place-items:center;color:var(--scan-ink);position:relative}
+.vid .screen iframe{position:absolute;inset:0;width:100%;height:100%;border:0;background:#000}
 .vid .screen video{position:absolute;inset:0;width:100%;height:100%;background:#000}
 .play{width:62px;height:62px;border-radius:50%;border:2px solid rgba(255,255,255,.7);display:grid;place-items:center}
 .play::after{content:"";border-left:18px solid #fff;border-block:11px solid transparent;margin-left:5px}
@@ -259,7 +260,7 @@ footer img{height:44px;border-radius:4px;background:#fff}
 
 <header class="top">
   <div class="wrap">
-    <a class="brand" href="#top">US<span>Enhance</span> · Team 17</a>
+    <a class="brand" href="#top">Multi-Organ <span>Ultrasound</span> Enhancement · Team 17</a>
     <nav aria-label="Sections">
       <a href="#problem">Problem</a><a href="#objectives">Objectives</a><a href="#method">Methodology</a><a href="#demo">Live comparison</a><a href="#results">Results</a><a href="#progress">Progress</a><a href="#docs">Documentation</a><a href="#videos">Videos</a><a href="#team">Team</a><a href="#code">GitHub</a>
     </nav>
@@ -576,7 +577,7 @@ footer img{height:44px;border-radius:4px;background:#fff}
     <div class="sec-head">
       <span class="eyebrow">Demonstration videos</span>
       <h2>See the pipeline run.</h2>
-      <p class="lede">Add your recordings in the <code style="font-family:var(--f-mono)">VIDEOS</code> list at the top of the script. A direct .mp4 plays inline; any other link opens in a new tab.</p>
+      <p class="lede">Walkthroughs of the architecture, the results and the code.</p>
     </div>
     <div class="vids" id="vids"></div>
   </div>
@@ -619,15 +620,21 @@ footer img{height:44px;border-radius:4px;background:#fff}
 
 <footer>
   <div class="wrap">
-    <div style="display:flex;gap:16px;align-items:center"><img src="assets/amrita-logo.jpg" alt="Amrita Vishwa Vidyapeetham"><span>Multi-Organ Anatomy Preserving Speckle Reduction and Texture Enhancement in Ultrasound Images<br>23CSE498 · Team 17 · October 2026</span></div>
+    <div style="display:flex;gap:16px;align-items:center"><img src="assets/amrita-logo.jpg" alt="Amrita Vishwa Vidyapeetham"><span>Multi-Organ Anatomy-Preserving Speckle Reduction and Texture Enhancement in Ultrasound Images Using Semantic-Guided Latent Diffusion with Pixel Refinement<br>23CSE498 · Team 17 · October 2026</span></div>
     <span>Built as a course project website.</span>
   </div>
 </footer>
 
 <script>
-/* ---- EDIT ME: demonstration videos ---- */
+/* ---- demonstration videos ----
+   Paste the Google Drive share link (or a YouTube link) into "url" for each video.
+   Drive: right-click the video > Share > General access: "Anyone with the link" > Copy link.
+   Leave url empty to show "coming soon". Optional: instead of a link, put an .mp4 in
+   assets/videos/ and set "file" to its name. */
 var VIDEOS = [
-  /* { title:"End-to-end demo", desc:"Noisy scan in, enhanced scan and organ label out.", url:"assets/demo.mp4" }, */
+  {title:"Architecture walkthrough", desc:"How the VAE, USFM guidance, Swin-Diffusion U-Net and pixel refiner fit together.", url:"https://drive.google.com/drive/folders/1M4a5fhv6gPT-aZYh9eQquLXR0Hd3_l9Z?usp=sharing", file:""},
+  {title:"Training and test results explained", desc:"Loss curves, held-out and test-partition metrics, and per-organ outputs.", url:"https://drive.google.com/drive/folders/1M4a5fhv6gPT-aZYh9eQquLXR0Hd3_l9Z", file:""},
+  {title:"End-to-end code review", desc:"A walkthrough of the code from data loading to the final enhanced image.", url:"https://drive.google.com/file/d/1cN099h_apaSCOITlVfYjUgSVqWS07kQZ/view?usp=drive_link", file:""}
 ];
 
 var ORGANS = { /* held-out means, input vs. refined output */
@@ -785,21 +792,36 @@ bars('psnrBars','psnr0','psnr1',30,2);
 bars('ssimBars','ssim0','ssim1',1,3);
 
 /* ---- videos ---- */
+function embedFor(url){
+  var m = url.match(/drive\.google\.com\/file\/d\/([\w-]+)/) || url.match(/drive\.google\.com\/(?:open|uc)\?(?:[^#]*&)?id=([\w-]+)/);
+  if(m) return 'https://drive.google.com/file/d/'+m[1]+'/preview';
+  m = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([\w-]{11})/);
+  if(m) return 'https://www.youtube.com/embed/'+m[1];
+  return '';
+}
 (function(){
   var box = document.getElementById('vids');
-  var list = VIDEOS.length ? VIDEOS : [
-    {title:"End-to-end demo", desc:"Noisy scan in, enhanced scan and organ label out.", url:""},
-    {title:"Architecture walkthrough", desc:"How USFM guidance steers the diffusion model.", url:""},
-    {title:"Training and results", desc:"Loss curves, metrics and per-organ outputs.", url:""}
-  ];
-  list.forEach(function(v){
+  var soon = '<span class="play" style="opacity:.45"></span><span class="soon">Video coming soon</span>';
+  VIDEOS.forEach(function(v){
     var d = document.createElement('div'); d.className='vid';
-    var screen;
-    if(v.url && /\.(mp4|webm)$/i.test(v.url)){ screen = '<div class="screen"><video controls preload="metadata" src="'+v.url+'"></video></div>'; }
-    else if(v.url){ screen = '<a class="screen" href="'+v.url+'" target="_blank" rel="noopener" aria-label="Open '+v.title+'"><span class="play"></span></a>'; }
-    else { screen = '<div class="screen"><span class="play" style="opacity:.45"></span><span class="soon">Video coming soon</span></div>'; }
-    d.innerHTML = screen+'<div class="txt"><h3>'+v.title+'</h3><p>'+v.desc+'</p></div>';
-    box.appendChild(d);
+    var scr = document.createElement('div'); scr.className='screen';
+    var emb = v.url ? embedFor(v.url) : '';
+    if(emb){
+      var f = document.createElement('iframe'); f.src = emb; f.title = v.title; f.loading = 'lazy';
+      f.allow = 'autoplay; fullscreen'; f.setAttribute('allowfullscreen','');
+      scr.appendChild(f);
+    } else if(v.url){
+      scr.innerHTML = '<a href="'+v.url+'" target="_blank" rel="noopener" class="screen" aria-label="Open '+v.title+'" style="position:absolute;inset:0;display:grid;place-items:center"><span class="play"></span></a>';
+    } else if(v.file){
+      var vid = document.createElement('video');
+      vid.controls = true; vid.preload = 'metadata'; vid.setAttribute('playsinline','');
+      vid.addEventListener('error', function(){ scr.innerHTML = soon; }, true);
+      vid.src = 'assets/videos/'+v.file+'#t=0.1'; scr.appendChild(vid);
+    } else { scr.innerHTML = soon; }
+    d.appendChild(scr);
+    var t = document.createElement('div'); t.className='txt';
+    t.innerHTML = '<h3>'+v.title+'</h3><p>'+v.desc+'</p>'+(v.url?'<p style="margin-top:8px"><a href="'+v.url+'" target="_blank" rel="noopener">Open in a new tab ↗</a></p>':'');
+    d.appendChild(t); box.appendChild(d);
   });
 })();
 
